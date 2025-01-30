@@ -1,5 +1,5 @@
 package com.venky.parkingBookingPortal.entity;
-
+import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -44,7 +44,7 @@ public class User {
     @Column(columnDefinition = "GEOMETRY")  // For storing location
     private String currentLocation;
 
-    @Column(nullable = false)
+    @Column
     private Long allowedAfter;  // Epoch timestamp for permission
 
 }

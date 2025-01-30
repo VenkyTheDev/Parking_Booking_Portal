@@ -24,9 +24,9 @@ public class Notification {
     @JoinColumn(name = "booking_id", nullable = false)  // Foreign Key to Booking
     private Booking booking;
 
-    @Column(nullable = false, name = "message")
+    @Column(nullable = false)
     private String message;  // Message content for the notification
 
-    @Column(nullable = false, name = "created_at")
+    @Column(nullable = false , name = "created_at")
     private LocalDateTime createdAt;  // Timestamp of notification creation
 }

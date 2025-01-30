@@ -1,6 +1,7 @@
 package com.venky.parkingBookingPortal.dao;
 
 import com.venky.parkingBookingPortal.entity.User;
+import com.venky.parkingBookingPortal.entity.Organisation;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,10 +9,11 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+
 @Repository
 @Transactional
 public class UserDAOJpaImpl implements UserDAO {
-    private EntityManager entityManager;
+    private final EntityManager entityManager;
 
     @Autowired
     public UserDAOJpaImpl(EntityManager entityManager) {
@@ -50,6 +52,16 @@ public class UserDAOJpaImpl implements UserDAO {
     public Optional<User> findByEmail(String email) {
         List<User> users = entityManager.createQuery("SELECT u FROM User u WHERE u.email = :email", User.class)
                 .setParameter("email", email)
+                .getResultList();
+        return users.stream().findFirst();
+    }
+
+    @Override
+    public Optional<User> findByEmailAndOrganisation(String email, Organisation organisation) {
+        List<User> users = entityManager.createQuery(
+                        "SELECT u FROM User u WHERE u.email = :email AND u.organisation = :organisation", User.class)
+                .setParameter("email", email)
+                .setParameter("organisation", organisation)
                 .getResultList();
         return users.stream().findFirst();
     }

@@ -17,21 +17,21 @@ public class Booking {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)  // Foreign Key to User
+    @JoinColumn(nullable = false)  // Foreign Key to User
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "parking_id", nullable = false)  // Foreign Key to Parking
+    @JoinColumn(nullable = false)  // Foreign Key to Parking
     private Parking parking;
 
-    @Column(nullable = false, name = "start_time")
+    @Column(nullable = false)
     private LocalDateTime startTime;  // Start time of the booking
 
-    @Column(nullable = false, name = "end_time")
+    @Column(nullable = false)
     private LocalDateTime endTime;  // End time of the booking
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, name = "status")
+    @Column(nullable = false)
     private Status status;  // Status of the booking (Success / Failed)
 
     // Enum for booking status
