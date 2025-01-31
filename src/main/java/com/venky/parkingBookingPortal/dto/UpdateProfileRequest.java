@@ -8,13 +8,14 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class LoginRequest {
+public class UpdateProfileRequest {
 
-    @NotBlank
+    @Size(min = 3, max = 50)
+    private String name;
+
     @Email
     private String email;
 
-    @NotBlank
-    @Size(min = 1, max = 100)
+    @Size(min = 3, max = 100, message = "Password should be at least 6 characters")
     private String password;
 }

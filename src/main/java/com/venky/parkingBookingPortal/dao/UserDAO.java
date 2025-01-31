@@ -17,4 +17,5 @@ public interface UserDAO {
     Optional<User> findByEmail(String email);
 
     Optional<User> findByEmailAndOrganisation(String email, Organisation organisation);
+
 }

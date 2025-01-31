@@ -2,6 +2,7 @@ package com.venky.parkingBookingPortal.dao;
 
 import com.venky.parkingBookingPortal.entity.Booking;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -45,5 +46,13 @@ public class BookingDAOJpaImpl implements BookingDAO {
         if (booking != null) {
             entityManager.remove(booking);
         }
+    }
+
+    @Override
+    public List<Booking> findByUserId(Long userId) {
+        TypedQuery<Booking> query = entityManager.createQuery(
+                "SELECT b FROM Booking b WHERE b.user.id = :userId", Booking.class);
+        query.setParameter("userId", userId);
+        return query.getResultList();
     }
 }

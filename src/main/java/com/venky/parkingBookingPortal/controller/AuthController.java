@@ -15,7 +15,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;
@@ -39,6 +39,8 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials.");
         }
     }
+
+
 
 //    @PostMapping("/logout")
 //    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {

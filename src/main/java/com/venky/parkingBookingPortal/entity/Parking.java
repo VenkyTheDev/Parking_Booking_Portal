@@ -30,5 +30,20 @@ public class Parking {
     private Integer totalSlots;
 
     @OneToMany(mappedBy = "parking", cascade = CascadeType.ALL)
-    private List<Booking> bookings;  // One Parking → Many Bookings
+    private List<Booking> bookings;
+
+    public void decrementSlots() {
+        if (this.totalSlots > 0) {
+            this.totalSlots -= 1;
+        } else {
+            throw new IllegalArgumentException("No available slots");
+        }
+    }// One Parking → Many Bookings
+
+    public void incrementSlots() {
+        if (this.totalSlots > 0) {
+            this.totalSlots++;
+        }
+    }
+
 }
