@@ -6,6 +6,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
@@ -17,8 +18,8 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-
-    private String secretkey = "^%fyf454@,l./?feihfur3gfuy7y345y7";
+    @Value("${secretkey}")
+    private String secretkey;
 //    public String generateToken(String email) {
 //
 //        SecretKey key = Keys.hmacShaKeyFor(secretkey.getBytes(StandardCharsets.UTF_8));

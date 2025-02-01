@@ -3,6 +3,7 @@ package com.venky.parkingBookingPortal.controller;
 import com.venky.parkingBookingPortal.dao.UserDAO;
 import com.venky.parkingBookingPortal.dto.BookingRequest;
 import com.venky.parkingBookingPortal.dto.BookingResponse;
+import com.venky.parkingBookingPortal.dto.RescheduleRequest;
 import com.venky.parkingBookingPortal.entity.User;
 import com.venky.parkingBookingPortal.service.BookingService;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
@@ -35,13 +36,8 @@ public class BookingController {
     }
 
     @GetMapping("/history/{userId}")
-    public ResponseEntity<List<BookingResponse>> getBookingHistory(@PathVariable Long userId) {
-        List<BookingResponse> history = bookingService.getBookingHistory(userId);
-        return ResponseEntity.ok(history);
-    }
-
-    @PostMapping("/{id}/cancel")
-    public ResponseEntity<?> cancelBooking(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> getBookingHistory(@PathVariable Long userId, @RequestHeader("Authorization") String token) {
+        // Extract email from JWT token
         String email = jwtUtil.extractEmail(token);
 
         // Retrieve the requesting user from the database
@@ -52,8 +48,39 @@ public class BookingController {
 
         User requestingUser = requestingUserOptional.get();
 
-        // Attempt to cancel the booking
-        String response = bookingService.cancelBooking(id, requestingUser);
+        // Call the service to get the booking history
+        List<BookingResponse> bookingHistory = bookingService.getBookingHistory(userId, requestingUser);
+        return ResponseEntity.ok(bookingHistory);
+    }
+
+    @PostMapping("/{userId}/cancel")
+    public ResponseEntity<?> cancelBooking(@PathVariable Long userId, @RequestHeader("Authorization") String token) {
+        // Extract email from JWT token
+        String email = jwtUtil.extractEmail(token);
+
+        // Retrieve the requesting user from the database via service (not DAO)
+        Optional<User> requestingUserOptional = userDAO.findByEmail(email);
+        if (requestingUserOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token or user not found");
+        }
+
+        User requestingUser = requestingUserOptional.get();
+
+        // Call service method to cancel the booking
+        String response = bookingService.cancelBooking(userId, requestingUser);
+
+        if (response.contains("not found") || response.contains("permission")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reschedule")
+    public ResponseEntity<?> rescheduleBooking(@RequestBody RescheduleRequest request,
+                                               @RequestHeader("Authorization") String token) {
+        // Call the service to handle everything
+        String response = bookingService.rescheduleBooking(request, token);
         return ResponseEntity.ok(response);
     }
 

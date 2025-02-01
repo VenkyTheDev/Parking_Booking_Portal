@@ -60,7 +60,7 @@ public class Booking {
     @Column(unique = true, nullable = false, name = "id")
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(nullable = false)  // Foreign Key to User
     private User user;
 

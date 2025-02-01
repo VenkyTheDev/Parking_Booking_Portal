@@ -1,12 +1,18 @@
 package com.venky.parkingBookingPortal.dao;
 
 import com.venky.parkingBookingPortal.entity.Booking;
+import com.venky.parkingBookingPortal.entity.User;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 @Repository
@@ -49,10 +55,67 @@ public class BookingDAOJpaImpl implements BookingDAO {
     }
 
     @Override
+    public void deleteByUserId(Long userId) {
+        entityManager.createQuery("DELETE FROM Booking b WHERE b.user.id = :userId")
+                    .setParameter("userId", userId)
+                    .executeUpdate();
+    }
+
+
+    @Override
     public List<Booking> findByUserId(Long userId) {
         TypedQuery<Booking> query = entityManager.createQuery(
                 "SELECT b FROM Booking b WHERE b.user.id = :userId", Booking.class);
         query.setParameter("userId", userId);
         return query.getResultList();
     }
+
+    @Override
+    public Optional<Booking> findFirstByUserIdAndStatusOrderByStartTimeDesc(Long userId, Booking.Status status) {
+        try {
+            Booking booking = entityManager.createQuery(
+                            "SELECT b FROM Booking b WHERE b.user.id = :userId AND b.status = :status " +
+                                    "ORDER BY b.startTime DESC", Booking.class)
+                    .setParameter("userId", userId)
+                    .setParameter("status", status)
+                    .setMaxResults(1) // Fetch only the latest booking
+                    .getSingleResult();
+
+            return Optional.of(booking);
+        } catch (NoResultException e) {
+            return Optional.empty(); // Return empty if no matching booking is found
+        }
+    }
+
+
+    @Override
+    public Optional<Booking> findFirstByUserIdOrderByStartTimeDesc(Long userId) {
+        try {
+            // Fetch the latest booking regardless of its status
+            Booking booking = entityManager.createQuery(
+                            "SELECT b FROM Booking b WHERE b.user.id = :userId " +
+                                    "ORDER BY b.startTime DESC, b.createdAt DESC", Booking.class)
+                    .setParameter("userId", userId)
+                    .setMaxResults(1) // Fetch only the latest booking
+                    .getSingleResult();
+
+            return Optional.of(booking);
+        } catch (NoResultException e) {
+            return Optional.empty(); // Return empty if no matching booking is found
+        }
+    }
+
+
+    @Override
+    public long countByParkingAndTimeRange(Long parkingId, LocalDateTime startTime, LocalDateTime endTime) {
+        String jpql = "SELECT COUNT(b) FROM Booking b WHERE b.parking.id = :parkingId AND " +
+                "((b.startTime BETWEEN :startTime AND :endTime) OR (b.endTime BETWEEN :startTime AND :endTime))";
+        TypedQuery<Long> query = entityManager.createQuery(jpql, Long.class);
+        query.setParameter("parkingId", parkingId);
+        query.setParameter("startTime", startTime);
+        query.setParameter("endTime", endTime);
+
+        return query.getSingleResult();
+    }
+
 }

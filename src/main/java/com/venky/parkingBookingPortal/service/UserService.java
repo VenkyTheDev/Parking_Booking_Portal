@@ -1,8 +1,13 @@
 package com.venky.parkingBookingPortal.service;
 
+import com.venky.parkingBookingPortal.dao.BookingDAO;
 import com.venky.parkingBookingPortal.dao.UserDAO;
 import com.venky.parkingBookingPortal.dto.UpdateProfileRequest;
+import com.venky.parkingBookingPortal.entity.Role;
 import com.venky.parkingBookingPortal.entity.User;
+import com.venky.parkingBookingPortal.exceptions.ForbiddenException;
+import com.venky.parkingBookingPortal.exceptions.UnauthorizedException;
+import com.venky.parkingBookingPortal.utils.JwtUtil;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,9 +20,14 @@ public class UserService {
 
     private final UserDAO userDAO;
 
+    private final BookingDAO bookingDAO;
+    private final JwtUtil jwtUtil;
+
     @Autowired
-    public UserService(UserDAO userDAO) {
+    public UserService(UserDAO userDAO , BookingDAO bookingDAO, JwtUtil jwtUtil) {
         this.userDAO = userDAO;
+        this.bookingDAO = bookingDAO;
+        this.jwtUtil = jwtUtil;
     }
 
     public Optional<User> updateUser(Long userId, UpdateProfileRequest request) {
@@ -48,13 +58,52 @@ public class UserService {
 
         return Optional.empty();
     }
-    public boolean deleteUser(Long userId) {
+//    public boolean deleteUser(Long userId) {
+//        Optional<User> userOptional = userDAO.findById(userId);
+//        if (userOptional.isPresent()) {
+//            User user = userOptional.get();
+//
+//            // Explicitly delete all bookings for this user
+//            bookingDAO.deleteByUserId(userId);
+//
+//            // Now delete the user
+//            userDAO.deleteById(userId);
+//            return true;
+//        }
+//        return false;
+//    }
+
+    public boolean deleteUserByAdmin(Long userId, String token) throws UnauthorizedException, ForbiddenException {
+        // Extract email from the JWT token
+        String email = jwtUtil.extractEmail(token);
+
+        // Retrieve the requesting user from the database
+        Optional<User> requestingUserOptional = userDAO.findByEmail(email);
+        if (requestingUserOptional.isEmpty()) {
+            throw new UnauthorizedException("Invalid token or user not found.");
+        }
+
+        User requestingUser = requestingUserOptional.get();
+
+        // Check if the requesting user is an admin
+        if (requestingUser.getRole() != Role.ADMIN) {
+            throw new ForbiddenException("You do not have permission to delete a user.");
+        }
+
+        // Proceed with the user deletion if the role is admin
         Optional<User> userOptional = userDAO.findById(userId);
         if (userOptional.isPresent()) {
+            User user = userOptional.get();
+
+            // Explicitly delete all bookings for this user
+            bookingDAO.deleteByUserId(userId);
+
+            // Now delete the user
             userDAO.deleteById(userId);
             return true;
         }
-        return false;
+
+        return false;  // User not found
     }
 
     public String flagUser(Long userId, int days) {
