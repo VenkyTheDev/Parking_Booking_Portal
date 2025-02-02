@@ -45,8 +45,12 @@ public class AdminController {
 
     @PostMapping("/flag/{userId}")
     public ResponseEntity<String> flagUser(@PathVariable Long userId, @RequestBody int days) {
-        String result = userService.flagUser(userId, days);
-        return ResponseEntity.ok(result);
+        try {
+            String result = userService.flagUser(userId, days);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while flagging the user.");
+        }
     }
 
     @PostMapping("/unflag/{userId}")

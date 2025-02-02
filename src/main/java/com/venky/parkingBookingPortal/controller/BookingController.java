@@ -5,6 +5,9 @@ import com.venky.parkingBookingPortal.dto.BookingRequest;
 import com.venky.parkingBookingPortal.dto.BookingResponse;
 import com.venky.parkingBookingPortal.dto.RescheduleRequest;
 import com.venky.parkingBookingPortal.entity.User;
+import com.venky.parkingBookingPortal.exceptions.ForbiddenException;
+import com.venky.parkingBookingPortal.exceptions.NotFoundException;
+import com.venky.parkingBookingPortal.exceptions.UnauthorizedException;
 import com.venky.parkingBookingPortal.service.BookingService;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,19 +41,23 @@ public class BookingController {
     @GetMapping("/history/{userId}")
     public ResponseEntity<?> getBookingHistory(@PathVariable Long userId, @RequestHeader("Authorization") String token) {
         // Extract email from JWT token
-        String email = jwtUtil.extractEmail(token);
+        try {
+            // Extract email from JWT token
+            String email = jwtUtil.extractEmail(token);
 
-        // Retrieve the requesting user from the database
-        Optional<User> requestingUserOptional = userDAO.findByEmail(email);
-        if (requestingUserOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token or user not found");
+            // Call the service directly with email (avoiding DAO access in the controller)
+            List<BookingResponse> bookingHistory = bookingService.getBookingHistory(userId, email);
+
+            return ResponseEntity.ok(bookingHistory);
+        } catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (ForbiddenException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
         }
-
-        User requestingUser = requestingUserOptional.get();
-
-        // Call the service to get the booking history
-        List<BookingResponse> bookingHistory = bookingService.getBookingHistory(userId, requestingUser);
-        return ResponseEntity.ok(bookingHistory);
     }
 
     @PostMapping("/{userId}/cancel")

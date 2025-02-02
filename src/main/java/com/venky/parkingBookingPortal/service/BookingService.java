@@ -10,6 +10,8 @@ import com.venky.parkingBookingPortal.entity.Booking;
 import com.venky.parkingBookingPortal.entity.Parking;
 import com.venky.parkingBookingPortal.entity.Role;
 import com.venky.parkingBookingPortal.entity.User;
+import com.venky.parkingBookingPortal.exceptions.ForbiddenException;
+import com.venky.parkingBookingPortal.exceptions.NotFoundException;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -135,32 +137,26 @@ public class BookingService {
         return "Booking successful!";
     }
 
-    public List<BookingResponse> getBookingHistory(Long userId, User currentUser) {
-        // Check if current user is either admin or the same as userId from URL
-        try {
-            if (currentUser.getRole() != Role.ADMIN && !currentUser.getId().equals(userId)) {
-                throw new RuntimeException("You are not authorized to access this user's booking history!");
-            }
-        }
-        catch (Exception e) {
-            return null;
+    public List<BookingResponse> getBookingHistory(Long userId, String email) {
+        // Fetch the user from the database using email (from token)
+        Optional<User> currentUserOptional = userDAO.findByEmail(email);
+        if (currentUserOptional.isEmpty()) {
+            throw new NotFoundException("User not found!");
         }
 
+        User currentUser = currentUserOptional.get();
 
-        // Check if the user exists
-        Optional<User> userOptional = userDAO.findById(userId);
-        if (userOptional.isEmpty()) {
-            throw new RuntimeException("User not found!");
+        // Allow access if the user is an admin OR if the user is requesting their own history
+        if (currentUser.getRole() != Role.ADMIN && !currentUser.getId().equals(userId)) {
+            throw new ForbiddenException("You are not authorized to access this user's booking history!");
         }
-
-        User user = userOptional.get();
 
         // Fetch bookings based on role
         List<Booking> bookings;
-        if (user.getRole() == Role.ADMIN) {
-            bookings = bookingDAO.findAll(); // Admin can access all bookings
+        if (currentUser.getRole() == Role.ADMIN) {
+            bookings = bookingDAO.findAll(); // Admins get all booking history
         } else {
-            bookings = bookingDAO.findByUserId(userId); // Regular users can only access their bookings
+            bookings = bookingDAO.findByUserId(userId); // Normal users get their own history
         }
 
         return bookings.stream()
