@@ -1,18 +1,16 @@
 package com.venky.parkingBookingPortal.dao;
 
 import com.venky.parkingBookingPortal.entity.Booking;
-import com.venky.parkingBookingPortal.entity.User;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 @Repository
@@ -118,4 +116,33 @@ public class BookingDAOJpaImpl implements BookingDAO {
         return query.getSingleResult();
     }
 
+    @Override
+    public boolean existsByParkingIdAndEndTimeBefore(Long parkingId, LocalDateTime endTime) {
+        String jpql = "SELECT CASE WHEN COUNT(b) > 0 THEN TRUE ELSE FALSE END " +
+                "FROM Booking b WHERE b.parking.id = :parkingId AND b.endTime < :endTime";
+
+        // Create the query using EntityManager
+        Query query = entityManager.createQuery(jpql);
+        query.setParameter("parkingId", parkingId);
+        query.setParameter("endTime", endTime);
+
+        // Execute the query and get the result (true/false)
+        Boolean result = (Boolean) query.getSingleResult();
+        return result != null && result;  // Return the result as boolean
+    }
+
+    @Override
+    public List<Booking> findByEndTimeBetweenAndStatus(LocalDateTime startTime, LocalDateTime endTime, Booking.Status status) {
+        try {
+            return entityManager.createQuery(
+                            "SELECT b FROM Booking b WHERE b.endTime BETWEEN :startTime AND :endTime AND b.status = :status", Booking.class)
+                    .setParameter("startTime", startTime)
+                    .setParameter("endTime", endTime)
+                    .setParameter("status", status)
+                    .getResultList();
+        } catch (Exception e) {
+            // Handle any exception, if required, or return an empty list
+            return Collections.emptyList();
+        }
+    }
 }

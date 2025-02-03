@@ -6,6 +6,8 @@ import com.venky.parkingBookingPortal.dto.UpdateProfileRequest;
 import com.venky.parkingBookingPortal.entity.Role;
 import com.venky.parkingBookingPortal.entity.User;
 import com.venky.parkingBookingPortal.exceptions.ForbiddenException;
+import com.venky.parkingBookingPortal.exceptions.NotFoundException;
+import com.venky.parkingBookingPortal.exceptions.UnauthorizedAccessException;
 import com.venky.parkingBookingPortal.exceptions.UnauthorizedException;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
 import org.mindrot.jbcrypt.BCrypt;
@@ -136,6 +138,26 @@ public class UserService {
         }
 
         return "User not found!";
+    }
+
+    public User getProfile(Long userId, String email) {
+        // Retrieve the requesting user using the email
+        Optional<User> requestingUserOptional = userDAO.findByEmail(email);
+        if (requestingUserOptional.isEmpty()) {
+            throw new UnauthorizedAccessException("Invalid token or user not found.");
+        }
+        User requestingUser = requestingUserOptional.get();
+
+        // If the requesting user is an admin, they can access any user's profile
+        if (requestingUser.getRole() == Role.ADMIN || requestingUser.getId().equals(userId)) {
+            Optional<User> userOptional = userDAO.findById(userId);
+            if (userOptional.isEmpty()) {
+                throw new NotFoundException("User not found.");
+            }
+            return userOptional.get();
+        } else {
+            throw new UnauthorizedAccessException("You do not have permission to view this profile.");
+        }
     }
 
 }

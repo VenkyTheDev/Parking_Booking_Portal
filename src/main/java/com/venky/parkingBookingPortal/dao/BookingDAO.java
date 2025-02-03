@@ -33,4 +33,8 @@ public interface BookingDAO {
     @Query("DELETE FROM Booking b WHERE b.user.id = :userId")
     void deleteByUserId(Long userId);
 
+    boolean existsByParkingIdAndEndTimeBefore(Long parkingId, LocalDateTime endTime);
+
+    List<Booking> findByEndTimeBetweenAndStatus(LocalDateTime startTime, LocalDateTime endTime, Booking.Status status);
+
 }

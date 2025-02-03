@@ -25,6 +25,7 @@ public class BookingController {
     private final UserDAO userDAO;
     private final BookingService bookingService;
     private final JwtUtil jwtUtil;
+
     @Autowired
     public BookingController(BookingService bookingService , JwtUtil jwtUtil , UserDAO userDAO) {
         this.bookingService = bookingService;

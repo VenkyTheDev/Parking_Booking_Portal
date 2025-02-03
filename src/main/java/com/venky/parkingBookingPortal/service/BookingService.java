@@ -154,7 +154,13 @@ public class BookingService {
         // Fetch bookings based on role
         List<Booking> bookings;
         if (currentUser.getRole() == Role.ADMIN) {
-            bookings = bookingDAO.findAll(); // Admins get all booking history
+            if(currentUser.getId().equals(userId)){
+                bookings = bookingDAO.findAll();
+            }
+            else {
+                bookings = bookingDAO.findByUserId(userId);
+                // Admins get all booking history
+            }
         } else {
             bookings = bookingDAO.findByUserId(userId); // Normal users get their own history
         }
@@ -235,7 +241,6 @@ public class BookingService {
         if (bookingOptional.isEmpty()) {
             return "Booking not found!";
         }
-
         Booking booking = bookingOptional.get();
 
         // Check if the requesting user is an admin or the owner of the booking
@@ -243,16 +248,30 @@ public class BookingService {
             return "You do not have permission to reschedule this booking!";
         }
 
-        // Check if booking belongs to the given user ID
+        // Check if the booking belongs to the given user ID
         if (!booking.getUser().getId().equals(userId)) {
             return "Booking does not belong to the provided user ID!";
         }
 
-        // Check if there is an available slot for the new time
+        // Retrieve parking details
         Parking parking = booking.getParking();
+
+        // Count overlapping bookings for the requested time
         long overlappingBookings = getOverlappingBookingCount(parking.getId(), newStartTime, newEndTime);
 
-        if (overlappingBookings >= parking.getTotalSlots()) {
+        // Check if the user's current booking overlaps with the new requested time
+        boolean isUserBookingOverlapping = doesBookingOverlap(booking, newStartTime, newEndTime);
+
+        // If the user's current booking is counted in overlapping bookings, remove it
+        if (isUserBookingOverlapping) {
+            overlappingBookings -= 1;
+        }
+
+        // Check if another booking is ending before the new start time (freeing up a slot)
+        boolean isSlotFreeingUp = isAnyBookingEndingBefore(parking.getId(), newStartTime);
+
+        // Allow rescheduling if slots are available OR a booking is freeing up
+        if (overlappingBookings >= parking.getTotalSlots() && !isSlotFreeingUp) {
             return "No available slot for the requested time!";
         }
 
@@ -262,6 +281,16 @@ public class BookingService {
         bookingDAO.save(booking);
 
         return "Booking rescheduled successfully!";
+    }
+
+    // Helper method to check if a booking overlaps with the new time
+    private boolean doesBookingOverlap(Booking booking, LocalDateTime newStartTime, LocalDateTime newEndTime) {
+        return !(booking.getEndTime().isBefore(newStartTime) || booking.getStartTime().isAfter(newEndTime));
+    }
+
+    // Helper method to check if any booking ends before the new start time, freeing up a slot
+    private boolean isAnyBookingEndingBefore(Long parkingId, LocalDateTime newStartTime) {
+        return bookingDAO.existsByParkingIdAndEndTimeBefore(parkingId, newStartTime);
     }
 
     private long getOverlappingBookingCount(Long parkingId, LocalDateTime newStartTime, LocalDateTime newEndTime) {

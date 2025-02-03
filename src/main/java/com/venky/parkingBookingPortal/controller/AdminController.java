@@ -6,6 +6,7 @@ import com.venky.parkingBookingPortal.exceptions.UnauthorizedException;
 import com.venky.parkingBookingPortal.service.UserService;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ public class AdminController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
+    @Autowired
     public AdminController(UserService userService, JwtUtil jwtUtil) {
         this.userService = userService;
         this.jwtUtil = jwtUtil;
