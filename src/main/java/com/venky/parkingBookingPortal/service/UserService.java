@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 @Service
@@ -97,11 +99,15 @@ public class UserService {
         if (userOptional.isPresent()) {
             User user = userOptional.get();
 
-            // Explicitly delete all bookings for this user
+            // Explicitly mark the user as deleted (soft delete)
+            user.setDeleted(true);
+
+            // Save the updated user to the database
+            userDAO.save(user);
+
+            // Optionally, delete all bookings for this user (depending on your requirements)
             bookingDAO.deleteByUserId(userId);
 
-            // Now delete the user
-            userDAO.deleteById(userId);
             return true;
         }
 
@@ -116,14 +122,15 @@ public class UserService {
         }
 
         // Set the allowed_after timestamp to the current time + (days * 86400 seconds)
-        long allowedAfterTimestamp = Instant.now().getEpochSecond() + (long)(days * 86400);
 
-        user.setAllowedAfter(allowedAfterTimestamp);
+        LocalDateTime allowedAfter = LocalDateTime.now().plusDays(2);
+        long allowedAfterMillis = allowedAfter.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        user.setAllowedAfter(allowedAfterMillis);
 
         // Save the user with the updated allowed_after field
         userDAO.save(user);
 
-        return "User flagged successfully, booking allowed after: " + allowedAfterTimestamp;
+        return "User flagged successfully, booking allowed after: " + allowedAfterMillis;
     }
 
     public String unflagUser(Long userId) {
@@ -132,7 +139,8 @@ public class UserService {
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             // Reset allowed_after to current epoch time
-            user.setAllowedAfter(System.currentTimeMillis()); // current epoch time
+            long allowedAfterMillis = System.currentTimeMillis();
+            user.setAllowedAfter(allowedAfterMillis); // current epoch time
             userDAO.save(user);
             return "User unflagged successfully!";
         }

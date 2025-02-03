@@ -37,11 +37,16 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
-        String token = authService.authenticateUser(loginRequest);
-        if (token != null) {
-            return ResponseEntity.ok("Login successful! Token: " + token);
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials.");
+        try{
+            String token = authService.authenticateUser(loginRequest);
+            if (token != null) {
+                return ResponseEntity.ok("Login successful! Token: " + token);
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials.");
+            }
+        }
+        catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 

@@ -121,6 +121,12 @@ public class Booking {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
+    private boolean processed = false;
+
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
     public enum Status {
         SUCCESS, CANCELLED, FAILED
     }

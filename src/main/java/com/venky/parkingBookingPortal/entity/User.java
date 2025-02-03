@@ -88,8 +88,11 @@ public class User {
     @Column(columnDefinition = "GEOMETRY")
     private String currentLocation;
 
-    @Column
+    @Column(nullable = true)
     private Long allowedAfter;
+
+    @Column(nullable = false)
+    private boolean isDeleted = false;
 
     // No bidirectional reference to bookings. This helps avoid circular dependencies.
 }

@@ -55,4 +55,7 @@ public class Notification {
 
     @Column(nullable = false , name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private boolean isDeleted = false;
 }

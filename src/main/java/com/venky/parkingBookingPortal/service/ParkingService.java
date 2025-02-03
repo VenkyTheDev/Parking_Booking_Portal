@@ -5,6 +5,8 @@ import com.venky.parkingBookingPortal.dao.ParkingDAO;
 import com.venky.parkingBookingPortal.entity.Booking;
 import com.venky.parkingBookingPortal.entity.Parking;
 import com.venky.parkingBookingPortal.exceptions.NotFoundException;
+import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@Log
+@Slf4j
 public class ParkingService {
 
     private final ParkingDAO parkingDAO;
@@ -31,25 +35,31 @@ public class ParkingService {
         return parking.getTotalSlots(); // Assuming you have a method for available slots
     }
 
-    @Scheduled(fixedRate = 60000)  // Runs every minute (adjust as needed)
+    @Scheduled(fixedRate = 6000)  // Runs every minute (adjust as needed)
     public void updateAvailableSlotsForToday() {
-        // Get the current date without time (i.e., start of the day)
+        log.info("I'm in the updateAvailableSlotsForToday method");
+        System.out.println("I'm in the updateAvailableSlotsForToday method");
+
         LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
-        LocalDateTime now = LocalDateTime.now();  // Current time
+        LocalDateTime now = LocalDateTime.now();
 
-        // Get all bookings with SUCCESS status that have ended today
-        List<Booking> endedBookingsToday = bookingDAO.findByEndTimeBetweenAndStatus(startOfDay, now, Booking.Status.SUCCESS);
+        // Get all unprocessed bookings with SUCCESS status that have ended today
+        List<Booking> endedBookingsToday = bookingDAO.findByEndTimeBetweenAndStatusAndProcessedFalse(
+                startOfDay, now, Booking.Status.SUCCESS
+        );
 
-        // Process each booking and increment the slots if it has ended and is successful
         for (Booking booking : endedBookingsToday) {
             Parking parking = booking.getParking();
 
-            // If the end time has passed, increment the slots
-            if (booking.getEndTime().isBefore(now)) {
-                parking.incrementSlots();  // Increment the available slots
-                parkingDAO.save(parking);  // Save the updated parking
+            if (booking.getEndTime().isBefore(now)) { // Ensure end time has passed
+                parking.incrementSlots(); // Increment available slots
+                parkingDAO.save(parking); // Save updated parking
+
+                booking.setProcessed(true); // Mark booking as processed
+                bookingDAO.save(booking); // Save updated booking
             }
         }
-    }
 
+        log.info("I'm at the end of updateAvailableSlotsForToday method");
+    }
 }

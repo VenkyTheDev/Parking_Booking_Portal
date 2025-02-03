@@ -35,6 +35,6 @@ public interface BookingDAO {
 
     boolean existsByParkingIdAndEndTimeBefore(Long parkingId, LocalDateTime endTime);
 
-    List<Booking> findByEndTimeBetweenAndStatus(LocalDateTime startTime, LocalDateTime endTime, Booking.Status status);
+    List<Booking> findByEndTimeBetweenAndStatusAndProcessedFalse(LocalDateTime startTime, LocalDateTime endTime, Booking.Status status);
 
 }

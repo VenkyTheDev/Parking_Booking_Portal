@@ -72,6 +72,9 @@ public class Parking {
     @Column(nullable = false, name = "total_slots")
     private Integer totalSlots;
 
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
     public void decrementSlots() {
         if (this.totalSlots > 0) {
             this.totalSlots -= 1;
@@ -81,9 +84,7 @@ public class Parking {
     }// One Parking → Many Bookings
 
     public void incrementSlots() {
-        if (this.totalSlots > 0) {
             this.totalSlots++;
-        }
     }
 
     // Removed the @OneToMany relationship with Booking to avoid cyclic dependency.

@@ -54,9 +54,9 @@ public class BookingDAOJpaImpl implements BookingDAO {
 
     @Override
     public void deleteByUserId(Long userId) {
-        entityManager.createQuery("DELETE FROM Booking b WHERE b.user.id = :userId")
-                    .setParameter("userId", userId)
-                    .executeUpdate();
+        entityManager.createQuery("UPDATE Booking b SET b.isDeleted = true WHERE b.user.id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
     }
 
 
@@ -132,17 +132,19 @@ public class BookingDAOJpaImpl implements BookingDAO {
     }
 
     @Override
-    public List<Booking> findByEndTimeBetweenAndStatus(LocalDateTime startTime, LocalDateTime endTime, Booking.Status status) {
-        try {
-            return entityManager.createQuery(
-                            "SELECT b FROM Booking b WHERE b.endTime BETWEEN :startTime AND :endTime AND b.status = :status", Booking.class)
-                    .setParameter("startTime", startTime)
-                    .setParameter("endTime", endTime)
-                    .setParameter("status", status)
-                    .getResultList();
-        } catch (Exception e) {
-            // Handle any exception, if required, or return an empty list
-            return Collections.emptyList();
-        }
+    public List<Booking> findByEndTimeBetweenAndStatusAndProcessedFalse(LocalDateTime startTime, LocalDateTime endTime, Booking.Status status) {
+        String query = "SELECT b FROM Booking b WHERE b.endTime BETWEEN :startTime AND :endTime " +
+                "AND b.status = :status AND b.processed = false";
+
+        // Create a TypedQuery
+        TypedQuery<Booking> typedQuery = entityManager.createQuery(query, Booking.class);
+
+        // Set parameters for the query
+        typedQuery.setParameter("startTime", startTime);
+        typedQuery.setParameter("endTime", endTime);
+        typedQuery.setParameter("status", status);
+
+        // Execute the query and return the result list
+        return typedQuery.getResultList();
     }
 }

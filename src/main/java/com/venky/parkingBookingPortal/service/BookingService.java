@@ -16,7 +16,9 @@ import com.venky.parkingBookingPortal.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -84,6 +86,13 @@ public class BookingService {
 
         User user = userOptional.get();
 
+        //Checking for the flag
+        LocalDateTime now = LocalDateTime.now();
+        Long allowedAfter = user.getAllowedAfter();
+        long nowTime = Instant.now().toEpochMilli();
+        if(allowedAfter != null && allowedAfter > nowTime){
+            return "You are not allowed to book parking! till " + allowedAfter + " milliseconds";
+        }
         // Retrieve parking by parkingId
         Optional<Parking> parkingOptional = parkingDAO.findById(request.getParkingId());
         if (parkingOptional.isEmpty()) {
@@ -96,8 +105,6 @@ public class BookingService {
         if (parking.getTotalSlots() <= 0) {
             return "No available slots!";
         }
-
-        LocalDateTime now = LocalDateTime.now();
         if (user.getRole() != Role.ADMIN && request.getStartTime().isAfter(now)) {
             return "Pre-booking is not allowed!";
         }
@@ -110,11 +117,12 @@ public class BookingService {
                 Booking lastBooking = latestBooking.get();
 
                 // If the last booking is CANCELLED or doesn't overlap with the requested time, allow booking
-                if (lastBooking.getStatus() == Booking.Status.CANCELLED || lastBooking.getEndTime().isBefore(request.getStartTime())) {
+
+                    if (lastBooking.getStatus() == Booking.Status.CANCELLED || lastBooking.getEndTime().isBefore(request.getStartTime())) {
                     // Proceed with the booking
-                } else {
-                    return "You already have an active booking overlapping with the requested time!";
-                }
+                    } else {
+                        return "You already have an active booking overlapping with the requested time!";
+                    }
             }
         }
 
@@ -256,45 +264,17 @@ public class BookingService {
         // Retrieve parking details
         Parking parking = booking.getParking();
 
-        // Count overlapping bookings for the requested time
-        long overlappingBookings = getOverlappingBookingCount(parking.getId(), newStartTime, newEndTime);
-
-        // Check if the user's current booking overlaps with the new requested time
-        boolean isUserBookingOverlapping = doesBookingOverlap(booking, newStartTime, newEndTime);
-
-        // If the user's current booking is counted in overlapping bookings, remove it
-        if (isUserBookingOverlapping) {
-            overlappingBookings -= 1;
-        }
-
-        // Check if another booking is ending before the new start time (freeing up a slot)
-        boolean isSlotFreeingUp = isAnyBookingEndingBefore(parking.getId(), newStartTime);
-
-        // Allow rescheduling if slots are available OR a booking is freeing up
-        if (overlappingBookings >= parking.getTotalSlots() && !isSlotFreeingUp) {
-            return "No available slot for the requested time!";
-        }
-
         // Update booking time
-        booking.setStartTime(newStartTime);
-        booking.setEndTime(newEndTime);
+        if(newStartTime != null){
+            booking.setStartTime(newStartTime);
+        }
+        if(newEndTime != null) {
+            booking.setEndTime(newEndTime);
+        }
         bookingDAO.save(booking);
 
         return "Booking rescheduled successfully!";
     }
 
-    // Helper method to check if a booking overlaps with the new time
-    private boolean doesBookingOverlap(Booking booking, LocalDateTime newStartTime, LocalDateTime newEndTime) {
-        return !(booking.getEndTime().isBefore(newStartTime) || booking.getStartTime().isAfter(newEndTime));
-    }
-
-    // Helper method to check if any booking ends before the new start time, freeing up a slot
-    private boolean isAnyBookingEndingBefore(Long parkingId, LocalDateTime newStartTime) {
-        return bookingDAO.existsByParkingIdAndEndTimeBefore(parkingId, newStartTime);
-    }
-
-    private long getOverlappingBookingCount(Long parkingId, LocalDateTime newStartTime, LocalDateTime newEndTime) {
-        return bookingDAO.countByParkingAndTimeRange(parkingId, newStartTime, newEndTime);
-    }
 
 }
