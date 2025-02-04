@@ -1,6 +1,8 @@
 package com.venky.parkingBookingPortal.controller;
 
+import com.venky.parkingBookingPortal.dto.ErrorResponse;
 import com.venky.parkingBookingPortal.dto.LoginRequest;
+import com.venky.parkingBookingPortal.dto.LoginResponse;
 import com.venky.parkingBookingPortal.dto.SignupRequest;
 import com.venky.parkingBookingPortal.service.AuthService;
 import jakarta.servlet.http.Cookie;
@@ -28,25 +30,27 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
-        String token = authService.registerUser(request);
-        return ResponseEntity.ok("User registered successfully! Token: " + token);
+        try{
+            String token = authService.registerUser(request);
+            return ResponseEntity.ok(new LoginResponse(token, "User registered successfully!"));
+        } catch (Exception e){
+            return ResponseEntity.ok(new ErrorResponse(e.getMessage(), HttpStatus.NOT_FOUND.value()));
+        }
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
-        try{
+        try {
             String token = authService.authenticateUser(loginRequest);
             if (token != null) {
-                return ResponseEntity.ok("Login successful! Token: " + token);
+                return ResponseEntity.ok(new LoginResponse(token, "Login successful!"));
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials.");
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
-
 
 
     @PostMapping("/logout")

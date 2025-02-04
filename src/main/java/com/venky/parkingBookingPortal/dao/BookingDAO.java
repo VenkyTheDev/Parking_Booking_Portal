@@ -23,6 +23,8 @@ public interface BookingDAO {
 
     List<Booking> findActiveBookings(Long userId);
 
+    List<Booking> findAllActiveBookings();
+
     long countByParkingAndTimeRange(Long parkingId, LocalDateTime startTime, LocalDateTime endTime);
 
 
@@ -31,5 +33,7 @@ public interface BookingDAO {
     boolean existsByParkingIdAndEndTimeBefore(Long parkingId, LocalDateTime endTime);
 
     List<Booking> findByEndTimeBetweenAndStatusAndProcessedFalse(LocalDateTime startTime, LocalDateTime endTime, Booking.Status status);
+
+    public List<Booking> findAllActiveBookingsBeforeEndTime(Long parkingId, LocalDateTime startTime ,LocalDateTime endTime);
 
 }

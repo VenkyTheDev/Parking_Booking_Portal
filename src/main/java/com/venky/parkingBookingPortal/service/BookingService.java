@@ -11,6 +11,7 @@ import com.venky.parkingBookingPortal.entity.Parking;
 import com.venky.parkingBookingPortal.entity.Role;
 import com.venky.parkingBookingPortal.entity.User;
 import com.venky.parkingBookingPortal.exceptions.ForbiddenException;
+import com.venky.parkingBookingPortal.exceptions.NotFoundException;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,14 +30,16 @@ public class BookingService {
     private final ParkingDAO parkingDAO;
     private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final ParkingService parkingService;
 
     @Autowired
-    public BookingService(BookingDAO bookingDAO, ParkingDAO parkingDAO, UserDAO userDAO, JwtUtil jwtUtil, UserService userService) {
+    public BookingService(BookingDAO bookingDAO, ParkingDAO parkingDAO, UserDAO userDAO, JwtUtil jwtUtil, UserService userService, ParkingService parkingService) {
         this.bookingDAO = bookingDAO;
         this.parkingDAO = parkingDAO;
         this.userDAO = userDAO;
         this.jwtUtil = jwtUtil;
         this.userService = userService;
+        this.parkingService = parkingService;
     }
 
     public String bookParking(BookingRequest request) {
@@ -64,7 +67,8 @@ public class BookingService {
         Parking parking = parkingOptional.get();
 
         // Check if there are available slots
-        if (parking.getTotalSlots() <= 0) {
+        int availableSlots = parkingService.fetchingAvailableSlots(request.getParkingId() , request.getStartTime() ,request.getEndTime());
+        if (availableSlots <= 0) {
             return "No available slots!";
         }
         if (user.getRole() != Role.ADMIN && request.getStartTime().isAfter(now)) {
@@ -101,7 +105,7 @@ public class BookingService {
         bookingDAO.save(booking);
 
         // Decrement the available slots in parking
-        parking.decrementSlots();
+//        parking.decrementSlots();
         parkingDAO.save(parking);
 
         return "Booking successful!";
@@ -225,5 +229,13 @@ public class BookingService {
         return "Booking rescheduled successfully!";
     }
 
+    public List<Booking> getBookedSlots(String token){
+        User user = userService.findUserByEmailViaToken(token);
+        if (user == null) {throw new NotFoundException("User not found!");
+        }
+        List<Booking> bookings;
+        bookings = bookingDAO.findAllActiveBookings();
+        return bookings;
+    }
 
 }

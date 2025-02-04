@@ -1,6 +1,7 @@
 package com.venky.parkingBookingPortal.dao;
 
 import com.venky.parkingBookingPortal.entity.Booking;
+import com.venky.parkingBookingPortal.entity.Parking;
 import com.venky.parkingBookingPortal.entity.Role;
 import com.venky.parkingBookingPortal.entity.User;
 import com.venky.parkingBookingPortal.exceptions.NotFoundException;
@@ -136,6 +137,17 @@ public class BookingDAOJpaImpl implements BookingDAO {
         return query.getResultList(); // Returns a list (empty if no active bookings exist)
     }
 
+    @Override
+    public List<Booking> findAllActiveBookings() {
+        String queryStr = "SELECT b FROM Booking b " +
+                "WHERE b.status = :status " +
+                "AND b.endTime > CURRENT_TIMESTAMP " + // Ensuring booking is still active
+                "ORDER BY b.endTime, b.createdAt DESC";
+        TypedQuery<Booking> query = entityManager.createQuery(queryStr, Booking.class)
+                .setParameter("status", Booking.Status.SUCCESS);
+        return query.getResultList();
+    }
+
 
     @Override
     public long countByParkingAndTimeRange(Long parkingId, LocalDateTime startTime, LocalDateTime endTime) {
@@ -162,6 +174,38 @@ public class BookingDAOJpaImpl implements BookingDAO {
         // Execute the query and get the result (true/false)
         Boolean result = (Boolean) query.getSingleResult();
         return result != null && result;  // Return the result as boolean
+    }
+
+    @Override
+    public List<Booking> findAllActiveBookingsBeforeEndTime(Long parkingId, LocalDateTime startTime, LocalDateTime endTime) {
+//        String queryStr = "SELECT b FROM Booking b " +
+//                "WHERE b.parking.id = :parkingId " +
+//                "AND b.status = 'SUCCESS' " +
+//                "AND b.startTime < :endTime " +   // Booking starts before the provided endTime
+//                "AND b.endTime > :startTime " +
+//                "AND b.processed = false "+// Booking ends after the provided startTime
+//                "ORDER BY b.startTime DESC, b.createdAt DESC, b.endTime ASC";
+
+        String queryStr = "SELECT b FROM Booking b " +
+                "WHERE b.parking.id = :parkingId " +
+                "AND b.status = 'SUCCESS' " +
+                "AND ( " +
+                "   (b.startTime < :endTime AND b.endTime > :startTime) " +   // Condition 1: start time overlaps with existing booking's time
+                "   OR " +
+                "   (b.startTime < :endTime AND b.endTime > :startTime) " +   // Condition 2: end time overlaps with existing booking's time
+                "   OR " +
+                "   (b.startTime <= :startTime AND b.endTime >= :endTime) " + // Condition 3: the new booking fully overlaps an existing booking
+                ") " +
+                "AND b.processed = false " +
+                "ORDER BY b.startTime DESC, b.createdAt DESC, b.endTime ASC";
+
+
+        TypedQuery<Booking> query = entityManager.createQuery(queryStr, Booking.class);
+        query.setParameter("parkingId", parkingId);
+        query.setParameter("startTime", startTime);
+        query.setParameter("endTime", endTime);
+
+        return query.getResultList();
     }
 
     @Override

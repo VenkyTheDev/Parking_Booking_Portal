@@ -22,16 +22,8 @@ public class OrganisationService {
         this.userDAO = userDAO;
     }
 
-    public List<Map<String, Object>> getAllOrganisations() {
-        return organizationDAO.findAll()
-                .stream()
-                .map(organisation -> {
-                    Map<String, Object> organisationData = new HashMap<>();
-                    organisationData.put("id", organisation.getId());
-                    organisationData.put("name", organisation.getName());
-                    return organisationData;
-                })
-                .collect(Collectors.toList());
+    public List<Organisation> getAllOrganisations() {
+        return organizationDAO.findAll();
     }
 
     public Organisation findById(Long id) {

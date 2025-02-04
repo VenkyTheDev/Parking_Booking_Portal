@@ -10,10 +10,12 @@ import com.venky.parkingBookingPortal.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -70,7 +72,6 @@ public class UserController {
             List<BookingResponse> responseList = activeBookings.stream()
                     .map(BookingResponse::new) // Convert Booking to BookingResponse
                     .collect(Collectors.toList());
-
             return ResponseEntity.ok(responseList);
         }catch(Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());

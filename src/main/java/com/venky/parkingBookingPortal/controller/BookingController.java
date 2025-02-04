@@ -3,12 +3,15 @@ package com.venky.parkingBookingPortal.controller;
 import com.venky.parkingBookingPortal.dao.UserDAO;
 import com.venky.parkingBookingPortal.dto.BookingRequest;
 import com.venky.parkingBookingPortal.dto.BookingResponse;
+import com.venky.parkingBookingPortal.dto.GetAvailableSlotsRequest;
 import com.venky.parkingBookingPortal.dto.RescheduleRequest;
+import com.venky.parkingBookingPortal.entity.Booking;
 import com.venky.parkingBookingPortal.entity.User;
 import com.venky.parkingBookingPortal.exceptions.ForbiddenException;
 import com.venky.parkingBookingPortal.exceptions.NotFoundException;
 import com.venky.parkingBookingPortal.exceptions.UnauthorizedException;
 import com.venky.parkingBookingPortal.service.BookingService;
+import com.venky.parkingBookingPortal.service.ParkingService;
 import com.venky.parkingBookingPortal.service.UserService;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -26,13 +30,15 @@ public class BookingController {
     private final BookingService bookingService;
     private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final ParkingService parkingService;
 
     @Autowired
-    public BookingController(BookingService bookingService , JwtUtil jwtUtil , UserDAO userDAO, UserService userService) {
+    public BookingController(BookingService bookingService , JwtUtil jwtUtil , UserDAO userDAO, UserService userService, ParkingService parkingService) {
         this.bookingService = bookingService;
         this.jwtUtil = jwtUtil;
         this.userDAO = userDAO;
         this.userService = userService;
+        this.parkingService = parkingService;
     }
 
     @PostMapping("/book")
@@ -86,6 +92,18 @@ public class BookingController {
         // Call the service to handle everything
         String response = bookingService.rescheduleBooking(request, token);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/bookedSlots")
+    public ResponseEntity<?> getBookedSlots(@RequestHeader("Authorization") String token) {
+        List<Booking> bookings = bookingService.getBookedSlots(token);
+        return ResponseEntity.ok(bookings);
+    }
+
+    @PostMapping("/availableSlots")
+    public ResponseEntity<?> getAvailableSlots(@RequestBody GetAvailableSlotsRequest request) {
+        int availableSlots = parkingService.fetchingAvailableSlots(request.getParkingId() , request.getStartTime() , request.getEndTime());
+        return ResponseEntity.ok(availableSlots);
     }
 
 }

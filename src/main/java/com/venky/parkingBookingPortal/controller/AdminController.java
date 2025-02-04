@@ -1,5 +1,6 @@
 package com.venky.parkingBookingPortal.controller;
 
+import com.venky.parkingBookingPortal.dto.ErrorResponse;
 import com.venky.parkingBookingPortal.dto.ParkingSpaceEditRequest;
 import com.venky.parkingBookingPortal.dto.ParkingSpaceRequest;
 import com.venky.parkingBookingPortal.entity.Organisation;
@@ -75,13 +76,13 @@ public class AdminController {
                                              @RequestBody ParkingSpaceRequest request) {
         User admin = userService.findUserByEmailViaToken(authHeader);
         if (admin == null || admin.getRole() != Role.ADMIN) {
-            return ResponseEntity.status(403).body("Access denied: Only admins can add parking spaces.");
+            return ResponseEntity.status(403).body(new ErrorResponse("Access denied: Only admins can add parking spaces.", 403));
         }
 
         // Fetch organisation
         Organisation organisation = organisationService.findById(request.getOrganisationId());
         if (organisation == null) {
-            return ResponseEntity.badRequest().body("Organisation not found");
+            return ResponseEntity.badRequest().body(new ErrorResponse("Organisation not found", 404));
         }
 
         // Create and save parking space

@@ -1,5 +1,6 @@
 package com.venky.parkingBookingPortal.controller;
 
+import com.venky.parkingBookingPortal.entity.Organisation;
 import com.venky.parkingBookingPortal.service.OrganisationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,7 @@ public class OrganisationController {
     public ResponseEntity<?> getAllOrganizationNames() {
         try {
             // Get the list of organisations with both id and name
-            List<Map<String, Object>> organizations = organisationService.getAllOrganisations();
+            List<Organisation> organizations = organisationService.getAllOrganisations();
             return ResponseEntity.ok(organizations);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while fetching organization details.");

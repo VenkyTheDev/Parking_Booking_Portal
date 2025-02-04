@@ -2,6 +2,7 @@ package com.venky.parkingBookingPortal.service;
 
 import com.venky.parkingBookingPortal.dao.BookingDAO;
 import com.venky.parkingBookingPortal.dao.ParkingDAO;
+import com.venky.parkingBookingPortal.dto.GetAvailableSlotsRequest;
 import com.venky.parkingBookingPortal.entity.Booking;
 import com.venky.parkingBookingPortal.entity.Organisation;
 import com.venky.parkingBookingPortal.entity.Parking;
@@ -29,12 +30,25 @@ public class ParkingService {
         this.bookingDAO = bookingDAO;
     }
 
+//    public int getAvailableSlots(Long parkingId) {
+////        Parking parking = parkingDAO.findById(parkingId)
+////                .orElseThrow(() -> new NotFoundException("Parking lot not found"));
+//        try {
+//            Parking parking = parkingDAO.findParkingId(parkingId);
+//            return parking.getTotalSlots();
+//        } catch (Exception e) {
+//            throw new NotFoundException("Parking lot not found");
+//        }
+//    }
+
     public int getAvailableSlots(Long parkingId) {
-//        Parking parking = parkingDAO.findById(parkingId)
-//                .orElseThrow(() -> new NotFoundException("Parking lot not found"));
+    //        Parking parking = parkingDAO.findById(parkingId)
+    //                .orElseThrow(() -> new NotFoundException("Parking lot not found"));
         try {
-            Parking parking = parkingDAO.findParkingId(parkingId);
-            return parking.getTotalSlots();
+//            Parking parking = parkingDAO.findParkingId(parkingId);
+//            return parking.getTotalSlots();
+            int availableSlots = 0;
+            return availableSlots;
         } catch (Exception e) {
             throw new NotFoundException("Parking lot not found");
         }
@@ -108,4 +122,17 @@ public class ParkingService {
             throw new RuntimeException("Error occurred while updating parking space", e);
         }
     }
+
+    public int fetchingAvailableSlots(Long parkingId , LocalDateTime startTime , LocalDateTime endTime) {
+        List<Booking> ActiveBookings = bookingDAO.findAllActiveBookingsBeforeEndTime(parkingId , startTime , endTime);
+        int totalActiveBookings = ActiveBookings.size();
+        Parking parking = parkingDAO.findParkingId(parkingId);
+        int totalActiveSlots = parking.getHighestSlots();
+        return totalActiveSlots - totalActiveBookings;
+    }
+
+    public List<Parking> getAllParkings() {
+        return parkingDAO.findAll();
+    }
+
 }
