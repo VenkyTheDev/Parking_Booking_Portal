@@ -86,7 +86,7 @@ public class AdminController {
         }
 
         // Create and save parking space
-        Parking parkingSpace = parkingService.addParkingSpace(organisation, request.getHighestSlots() , request.getName());
+        Parking parkingSpace = parkingService.addParkingSpace(request);
 
         return ResponseEntity.ok(parkingSpace);
     }

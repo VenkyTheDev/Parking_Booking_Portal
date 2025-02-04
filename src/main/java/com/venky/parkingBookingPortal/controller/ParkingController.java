@@ -19,17 +19,17 @@ public class ParkingController {
         this.parkingService = parkingService;
     }
 
-    @GetMapping("/{parkingId}/available-slots")
-    public ResponseEntity<?> getAvailableSlots(@PathVariable Long parkingId) {
-        try {
-            int availableSlots = parkingService.getAvailableSlots(parkingId);
-            return ResponseEntity.ok(availableSlots);
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
-        }
-    }
+//    @GetMapping("/{parkingId}/available-slots")
+//    public ResponseEntity<?> getAvailableSlots(@PathVariable Long parkingId) {
+//        try {
+//            int availableSlots = parkingService.getAvailableSlots(parkingId);
+//            return ResponseEntity.ok(availableSlots);
+//        } catch (NotFoundException e) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
+//        }
+//    }
 
     @GetMapping("/getall")
     public ResponseEntity<?> getAllParkings() {

@@ -1,8 +1,12 @@
 package com.venky.parkingBookingPortal.entity;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.venky.parkingBookingPortal.config.PointSerializer;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.locationtech.jts.geom.Point;
+
 import java.util.List;
 
 
@@ -24,8 +28,9 @@ public class Parking {
     @Column(nullable = false, length = 255, name = "name")
     private String name;
 
-    @Column(name = "location", columnDefinition = "GEOMETRY")
-    private String location;
+    @JsonSerialize(using = PointSerializer.class)
+    @Column(columnDefinition = "POINT")
+    private Point location;
 
     @Column(nullable = false, name = "total_slots")
     private Integer totalSlots;

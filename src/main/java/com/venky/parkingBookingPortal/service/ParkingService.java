@@ -1,14 +1,20 @@
 package com.venky.parkingBookingPortal.service;
 
 import com.venky.parkingBookingPortal.dao.BookingDAO;
+import com.venky.parkingBookingPortal.dao.OrganisationDAO;
 import com.venky.parkingBookingPortal.dao.ParkingDAO;
 import com.venky.parkingBookingPortal.dto.GetAvailableSlotsRequest;
+import com.venky.parkingBookingPortal.dto.ParkingSpaceRequest;
 import com.venky.parkingBookingPortal.entity.Booking;
 import com.venky.parkingBookingPortal.entity.Organisation;
 import com.venky.parkingBookingPortal.entity.Parking;
 import com.venky.parkingBookingPortal.exceptions.NotFoundException;
 import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -23,11 +29,15 @@ public class ParkingService {
 
     private final ParkingDAO parkingDAO;
     private final BookingDAO bookingDAO;
+    private final OrganisationDAO organisationDAO;
+
+    GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
     @Autowired
-    public ParkingService(ParkingDAO parkingDAO , BookingDAO bookingDAO) {
+    public ParkingService(ParkingDAO parkingDAO , BookingDAO bookingDAO , OrganisationDAO organisationDAO) {
         this.parkingDAO = parkingDAO;
         this.bookingDAO = bookingDAO;
+        this.organisationDAO = organisationDAO;
     }
 
 //    public int getAvailableSlots(Long parkingId) {
@@ -82,16 +92,22 @@ public class ParkingService {
         log.info("I'm at the end of updateAvailableSlotsForToday method");
     }
 
-    public Parking addParkingSpace(Organisation organisation, int highestSlots , String name) {
-        // Create a new Parking object for the organisation with the highest slots
-        Parking parking = new Parking();
-        parking.setOrganisation(organisation); // Associate with the organisation
-        parking.setTotalSlots(highestSlots);
-        parking.setHighestSlots(highestSlots);// Set the number of parking slots
-        parking.setName(name);
+    public Parking addParkingSpace(ParkingSpaceRequest request) {
+        try{// Create a new Parking object for the organisation with the highest slots
 
-        // Save the parking space to the database
-        return parkingDAO.save(parking); // Assuming save() returns the saved Parking entity
+            Parking parking = new Parking();
+            Organisation organisation = organisationDAO.findOrganisationById(request.getOrganisationId());
+            parking.setOrganisation(organisation); // Associate with the organisation
+            parking.setTotalSlots(request.getHighestSlots());
+            parking.setHighestSlots(request.getHighestSlots());// Set the number of parking slots
+            parking.setName(request.getName());
+            Point point = geometryFactory.createPoint(new Coordinate(request.getLongitude(), request.getLatitude()));
+            parking.setLocation(point);
+            // Save the parking space to the database
+            return parkingDAO.save(parking);
+        }catch (Exception e){
+            throw new NotFoundException("Parking space not found");
+        }
     }
 
     public Parking findParkingById(Long id) {
@@ -128,7 +144,7 @@ public class ParkingService {
         int totalActiveBookings = ActiveBookings.size();
         Parking parking = parkingDAO.findParkingId(parkingId);
         int totalActiveSlots = parking.getHighestSlots();
-        return totalActiveSlots - totalActiveBookings;
+        return Math.max(0 , totalActiveSlots - totalActiveBookings);
     }
 
     public List<Parking> getAllParkings() {

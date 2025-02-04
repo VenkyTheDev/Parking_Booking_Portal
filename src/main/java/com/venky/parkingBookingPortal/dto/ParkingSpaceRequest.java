@@ -9,4 +9,7 @@ public class ParkingSpaceRequest {
     private Long organisationId;
     private int highestSlots;
     private String name;
+    private Double latitude;
+    private Double longitude;
+
 }

@@ -40,6 +40,12 @@ dependencies {
 	implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
 	implementation 'org.hibernate.validator:hibernate-validator:8.0.0.Final'
 	implementation 'org.glassfish:jakarta.el:4.0.0'
+	implementation 'org.hibernate:hibernate-spatial:6.4.1.Final' // Use the latest version
+	implementation 'org.locationtech.jts:jts-core:1.19.0' // JTS for geometry handling
+//	implementation group: 'com.bedatadriven', name: 'jackson-datatype-jts', version: '2.2'
+//	implementation group: 'com.bedatadriven', name: 'jackson-datatype-jts', version: '2.4'
+	implementation 'com.bedatadriven:jackson-datatype-jts:2.4'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.0'
 }
 
 tasks.named('test') {

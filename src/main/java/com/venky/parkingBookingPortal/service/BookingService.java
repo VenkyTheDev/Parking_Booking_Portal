@@ -13,6 +13,10 @@ import com.venky.parkingBookingPortal.entity.User;
 import com.venky.parkingBookingPortal.exceptions.ForbiddenException;
 import com.venky.parkingBookingPortal.exceptions.NotFoundException;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,12 +29,15 @@ import java.util.stream.Collectors;
 @Service
 public class BookingService {
 
+    private static final double EARTH_RADIUS_KM = 6371;
     private final BookingDAO bookingDAO;
     private final UserDAO userDAO;
     private final ParkingDAO parkingDAO;
     private final JwtUtil jwtUtil;
     private final UserService userService;
     private final ParkingService parkingService;
+
+    GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
     @Autowired
     public BookingService(BookingDAO bookingDAO, ParkingDAO parkingDAO, UserDAO userDAO, JwtUtil jwtUtil, UserService userService, ParkingService parkingService) {
@@ -52,12 +59,12 @@ public class BookingService {
         User user = userOptional.get();
 
         //Checking for the flag
-        LocalDateTime now = LocalDateTime.now();
         Long allowedAfter = user.getAllowedAfter();
         long nowTime = Instant.now().toEpochMilli();
         if(allowedAfter != null && allowedAfter > nowTime){
             return "You are not allowed to book parking! till " + allowedAfter + " milliseconds";
         }
+        LocalDateTime now = LocalDateTime.now().plusMinutes(1);
         // Retrieve parking by parkingId
         Optional<Parking> parkingOptional = parkingDAO.findById(request.getParkingId());
         if (parkingOptional.isEmpty()) {
@@ -66,14 +73,26 @@ public class BookingService {
 
         Parking parking = parkingOptional.get();
 
+        if (user.getRole() != Role.ADMIN && request.getStartTime().isAfter(now)) {
+            return "Pre-booking is not allowed!";
+        }
+        //Checking Distance
+        Point parkingLocation = parking.getLocation();
+        try{
+            Point userLocation = geometryFactory.createPoint(new Coordinate(request.getLongitude(), request.getLatitude()));
+            if((calculateDistance(parkingLocation , userLocation) > 100) && user.getRole() != Role.ADMIN){
+                return "Please come closer to the parking location";
+            }
+        }catch (Exception e){
+            throw new IllegalArgumentException();
+        }
+
         // Check if there are available slots
         int availableSlots = parkingService.fetchingAvailableSlots(request.getParkingId() , request.getStartTime() ,request.getEndTime());
         if (availableSlots <= 0) {
             return "No available slots!";
         }
-        if (user.getRole() != Role.ADMIN && request.getStartTime().isAfter(now)) {
-            return "Pre-booking is not allowed!";
-        }
+
 
         // Check if the user already has an active booking (Admins can book multiple slots)
         if (user.getRole() != Role.ADMIN) {
@@ -236,6 +255,35 @@ public class BookingService {
         List<Booking> bookings;
         bookings = bookingDAO.findAllActiveBookings();
         return bookings;
+    }
+
+    public double calculateDistance(Point point1, Point point2) {
+        // Check if both points are non-null
+        if (point1 == null || point2 == null) {
+            throw new IllegalArgumentException("Both points must be non-null");
+        }
+
+        // Extract the latitude and longitude of the points
+        double lat1 = point1.getY();
+        double lon1 = point1.getX();
+        double lat2 = point2.getY();
+        double lon2 = point2.getX();
+
+        // Convert degrees to radians
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+
+        // Haversine formula
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        // Calculate the distance in kilometers
+        double distanceInKilometers = EARTH_RADIUS_KM * c;
+
+        // Convert the distance to meters
+        return distanceInKilometers * 1000; // Distance in meters
     }
 
 }

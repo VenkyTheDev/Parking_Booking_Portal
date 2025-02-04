@@ -190,9 +190,9 @@ public class BookingDAOJpaImpl implements BookingDAO {
                 "WHERE b.parking.id = :parkingId " +
                 "AND b.status = 'SUCCESS' " +
                 "AND ( " +
-                "   (b.startTime < :endTime AND b.endTime > :startTime) " +   // Condition 1: start time overlaps with existing booking's time
+                "   (b.startTime <= :endTime AND b.startTime >= :startTime) " +   // Condition 1: start time overlaps with existing booking's time
                 "   OR " +
-                "   (b.startTime < :endTime AND b.endTime > :startTime) " +   // Condition 2: end time overlaps with existing booking's time
+                "   (b.endTime <= :endTime AND b.endTime >= :startTime) " +   // Condition 2: end time overlaps with existing booking's time
                 "   OR " +
                 "   (b.startTime <= :startTime AND b.endTime >= :endTime) " + // Condition 3: the new booking fully overlaps an existing booking
                 ") " +
