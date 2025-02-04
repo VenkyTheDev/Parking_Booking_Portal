@@ -7,13 +7,10 @@ import com.venky.parkingBookingPortal.entity.User;
 import com.venky.parkingBookingPortal.dao.UserDAO;
 import com.venky.parkingBookingPortal.dao.OrganisationDAO;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
-import io.jsonwebtoken.Claims;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.Optional;
 
 import com.venky.parkingBookingPortal.entity.Role;

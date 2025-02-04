@@ -1,16 +1,19 @@
 package com.venky.parkingBookingPortal.dao;
 
 import com.venky.parkingBookingPortal.entity.Booking;
+import com.venky.parkingBookingPortal.entity.Role;
+import com.venky.parkingBookingPortal.entity.User;
+import com.venky.parkingBookingPortal.exceptions.NotFoundException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 @Repository
@@ -53,6 +56,9 @@ public class BookingDAOJpaImpl implements BookingDAO {
     }
 
     @Override
+    @Modifying
+    @Transactional
+    @org.springframework.data.jpa.repository.Query("DELETE FROM Booking b WHERE b.user.id = :userId")
     public void deleteByUserId(Long userId) {
         entityManager.createQuery("UPDATE Booking b SET b.isDeleted = true WHERE b.user.id = :userId")
                 .setParameter("userId", userId)
@@ -101,6 +107,33 @@ public class BookingDAOJpaImpl implements BookingDAO {
         } catch (NoResultException e) {
             return Optional.empty(); // Return empty if no matching booking is found
         }
+    }
+
+    @Override
+    public List<Booking> findActiveBookings(Long userId) {
+        User user = entityManager.find(User.class, userId);
+        if (user == null) {
+            throw new NotFoundException("User not found!");
+        }
+
+        boolean isAdmin = user.getRole() == Role.ADMIN; // Checking if the user is an admin
+
+        // Step 2: Fetch active bookings based on user role
+        String queryStr = "SELECT b FROM Booking b " +
+                "WHERE b.user.id = :userId " +
+                "AND b.status = :status " +
+                "AND b.endTime > CURRENT_TIMESTAMP " + // Ensuring booking is still active
+                "ORDER BY b.startTime DESC, b.createdAt DESC";
+
+        TypedQuery<Booking> query = entityManager.createQuery(queryStr, Booking.class)
+                .setParameter("userId", userId)
+                .setParameter("status", Booking.Status.SUCCESS);
+
+        if (!isAdmin) {
+            query.setMaxResults(1); // Normal users should only get their latest active booking
+        }
+
+        return query.getResultList(); // Returns a list (empty if no active bookings exist)
     }
 
 

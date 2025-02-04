@@ -46,4 +46,9 @@ public class OrganisationDAOJpaImpl implements OrganisationDAO {
             entityManager.remove(organisation);
         }
     }
+
+    @Override
+    public Organisation findOrganisationById(Long id) {
+        return entityManager.find(Organisation.class, id);  // Fetching Organisation by ID using EntityManager
+    }
 }

@@ -12,4 +12,6 @@ public interface ParkingDAO {
     List<Parking> findAll();
 
     void deleteById(Long id);
+
+    Parking findParkingId(Long id);
 }

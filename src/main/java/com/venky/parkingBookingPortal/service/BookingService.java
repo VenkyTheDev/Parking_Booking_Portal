@@ -11,14 +11,12 @@ import com.venky.parkingBookingPortal.entity.Parking;
 import com.venky.parkingBookingPortal.entity.Role;
 import com.venky.parkingBookingPortal.entity.User;
 import com.venky.parkingBookingPortal.exceptions.ForbiddenException;
-import com.venky.parkingBookingPortal.exceptions.NotFoundException;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -30,52 +28,16 @@ public class BookingService {
     private final UserDAO userDAO;
     private final ParkingDAO parkingDAO;
     private final JwtUtil jwtUtil;
+    private final UserService userService;
 
     @Autowired
-    public BookingService(BookingDAO bookingDAO, ParkingDAO parkingDAO, UserDAO userDAO, JwtUtil jwtUtil) {
+    public BookingService(BookingDAO bookingDAO, ParkingDAO parkingDAO, UserDAO userDAO, JwtUtil jwtUtil, UserService userService) {
         this.bookingDAO = bookingDAO;
         this.parkingDAO = parkingDAO;
         this.userDAO = userDAO;
         this.jwtUtil = jwtUtil;
+        this.userService = userService;
     }
-
-//    public String bookParking(BookingRequest request) {
-//        // Retrieve user by userId
-//        Optional<User> userOptional = userDAO.findById(request.getUserId());
-//        if (userOptional.isEmpty()) {
-//            return "User not found!";
-//        }
-//
-//        // Retrieve parking by parkingId
-//        Optional<Parking> parkingOptional = parkingDAO.findById(request.getParkingId());
-//        if (parkingOptional.isEmpty()) {
-//            return "Parking lot not found!";
-//        }
-//
-//        Parking parking = parkingOptional.get();
-//
-//        // Check if there are available slots
-//        if (parking.getTotalSlots() <= 0) {
-//            return "No available slots!";
-//        }
-//
-//        // Create a new booking
-//        Booking booking = new Booking();
-//        booking.setUser(userOptional.get());
-//        booking.setParking(parking);
-//        booking.setStartTime(request.getStartTime());
-//        booking.setEndTime(request.getEndTime());
-//        booking.setStatus(Booking.Status.SUCCESS);
-//
-//        // Save the booking
-//        bookingDAO.save(booking);
-//
-//        // Decrement the available slots in parking
-//        parking.decrementSlots();
-//        parkingDAO.save(parking);
-//
-//        return "Booking successful!";
-//    }
 
     public String bookParking(BookingRequest request) {
         // Retrieve user by userId
@@ -145,14 +107,9 @@ public class BookingService {
         return "Booking successful!";
     }
 
-    public List<BookingResponse> getBookingHistory(Long userId, String email) {
+    public List<BookingResponse> getBookingHistory(Long userId, User user) {
         // Fetch the user from the database using email (from token)
-        Optional<User> currentUserOptional = userDAO.findByEmail(email);
-        if (currentUserOptional.isEmpty()) {
-            throw new NotFoundException("User not found!");
-        }
-
-        User currentUser = currentUserOptional.get();
+        User currentUser = user;
 
         // Allow access if the user is an admin OR if the user is requesting their own history
         if (currentUser.getRole() != Role.ADMIN && !currentUser.getId().equals(userId)) {
@@ -222,16 +179,8 @@ public class BookingService {
     }
 
     public String rescheduleBooking(RescheduleRequest request, String token) {
-        // Extract email from JWT token
-        String email = jwtUtil.extractEmail(token);
+        User requestingUser = userService.findUserByEmailViaToken(token);
 
-        // Retrieve the requesting user from the database
-        Optional<User> requestingUserOptional = userDAO.findByEmail(email);
-        if (requestingUserOptional.isEmpty()) {
-            return "Invalid token or user not found";
-        }
-
-        User requestingUser = requestingUserOptional.get();
         Long bookingId = request.getBookingId();
         Long userId = request.getUserId();
         LocalDateTime newStartTime = request.getNewStartTime();

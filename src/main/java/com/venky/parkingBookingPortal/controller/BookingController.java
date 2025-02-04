@@ -9,6 +9,7 @@ import com.venky.parkingBookingPortal.exceptions.ForbiddenException;
 import com.venky.parkingBookingPortal.exceptions.NotFoundException;
 import com.venky.parkingBookingPortal.exceptions.UnauthorizedException;
 import com.venky.parkingBookingPortal.service.BookingService;
+import com.venky.parkingBookingPortal.service.UserService;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -25,12 +25,14 @@ public class BookingController {
     private final UserDAO userDAO;
     private final BookingService bookingService;
     private final JwtUtil jwtUtil;
+    private final UserService userService;
 
     @Autowired
-    public BookingController(BookingService bookingService , JwtUtil jwtUtil , UserDAO userDAO) {
+    public BookingController(BookingService bookingService , JwtUtil jwtUtil , UserDAO userDAO, UserService userService) {
         this.bookingService = bookingService;
         this.jwtUtil = jwtUtil;
         this.userDAO = userDAO;
+        this.userService = userService;
     }
 
     @PostMapping("/book")
@@ -44,10 +46,13 @@ public class BookingController {
         // Extract email from JWT token
         try {
             // Extract email from JWT token
-            String email = jwtUtil.extractEmail(token);
+//            String email = jwtUtil.extractEmail(token);
+//
+//            // Call the service directly with email (avoiding DAO access in the controller)
+//            List<BookingResponse> bookingHistory = bookingService.getBookingHistory(userId, email);
 
-            // Call the service directly with email (avoiding DAO access in the controller)
-            List<BookingResponse> bookingHistory = bookingService.getBookingHistory(userId, email);
+            User user = userService.findUserByEmailViaToken(token);
+            List<BookingResponse> bookingHistory = bookingService.getBookingHistory(userId , user);
 
             return ResponseEntity.ok(bookingHistory);
         } catch (UnauthorizedException e) {
@@ -63,16 +68,7 @@ public class BookingController {
 
     @PostMapping("/{userId}/cancel")
     public ResponseEntity<?> cancelBooking(@PathVariable Long userId, @RequestHeader("Authorization") String token) {
-        // Extract email from JWT token
-        String email = jwtUtil.extractEmail(token);
-
-        // Retrieve the requesting user from the database via service (not DAO)
-        Optional<User> requestingUserOptional = userDAO.findByEmail(email);
-        if (requestingUserOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token or user not found");
-        }
-
-        User requestingUser = requestingUserOptional.get();
+        User requestingUser = userService.findUserByEmailViaToken(token);
 
         // Call service method to cancel the booking
         String response = bookingService.cancelBooking(userId, requestingUser);

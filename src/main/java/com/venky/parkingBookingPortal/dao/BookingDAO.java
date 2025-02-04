@@ -1,10 +1,6 @@
 package com.venky.parkingBookingPortal.dao;
 
 import com.venky.parkingBookingPortal.entity.Booking;
-import jakarta.transaction.Transactional;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,12 +21,11 @@ public interface BookingDAO {
 
     Optional<Booking> findFirstByUserIdOrderByStartTimeDesc(Long userId);
 
+    List<Booking> findActiveBookings(Long userId);
+
     long countByParkingAndTimeRange(Long parkingId, LocalDateTime startTime, LocalDateTime endTime);
 
 
-    @Modifying
-    @Transactional
-    @Query("DELETE FROM Booking b WHERE b.user.id = :userId")
     void deleteByUserId(Long userId);
 
     boolean existsByParkingIdAndEndTimeBefore(Long parkingId, LocalDateTime endTime);

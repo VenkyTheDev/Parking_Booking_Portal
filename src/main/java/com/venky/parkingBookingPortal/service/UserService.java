@@ -3,6 +3,7 @@ package com.venky.parkingBookingPortal.service;
 import com.venky.parkingBookingPortal.dao.BookingDAO;
 import com.venky.parkingBookingPortal.dao.UserDAO;
 import com.venky.parkingBookingPortal.dto.UpdateProfileRequest;
+import com.venky.parkingBookingPortal.entity.Booking;
 import com.venky.parkingBookingPortal.entity.Role;
 import com.venky.parkingBookingPortal.entity.User;
 import com.venky.parkingBookingPortal.exceptions.ForbiddenException;
@@ -14,9 +15,9 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -62,32 +63,10 @@ public class UserService {
 
         return Optional.empty();
     }
-//    public boolean deleteUser(Long userId) {
-//        Optional<User> userOptional = userDAO.findById(userId);
-//        if (userOptional.isPresent()) {
-//            User user = userOptional.get();
-//
-//            // Explicitly delete all bookings for this user
-//            bookingDAO.deleteByUserId(userId);
-//
-//            // Now delete the user
-//            userDAO.deleteById(userId);
-//            return true;
-//        }
-//        return false;
-//    }
 
     public boolean deleteUserByAdmin(Long userId, String token) throws UnauthorizedException, ForbiddenException {
-        // Extract email from the JWT token
-        String email = jwtUtil.extractEmail(token);
 
-        // Retrieve the requesting user from the database
-        Optional<User> requestingUserOptional = userDAO.findByEmail(email);
-        if (requestingUserOptional.isEmpty()) {
-            throw new UnauthorizedException("Invalid token or user not found.");
-        }
-
-        User requestingUser = requestingUserOptional.get();
+        User requestingUser = findUserByEmailViaToken(token);
 
         // Check if the requesting user is an admin
         if (requestingUser.getRole() != Role.ADMIN) {
@@ -148,13 +127,14 @@ public class UserService {
         return "User not found!";
     }
 
-    public User getProfile(Long userId, String email) {
-        // Retrieve the requesting user using the email
-        Optional<User> requestingUserOptional = userDAO.findByEmail(email);
-        if (requestingUserOptional.isEmpty()) {
-            throw new UnauthorizedAccessException("Invalid token or user not found.");
-        }
-        User requestingUser = requestingUserOptional.get();
+//    public User getProfile(Long userId, String email) {
+    public User getProfile(Long userId, User user) {
+//        // Retrieve the requesting user using the email
+//        Optional<User> requestingUserOptional = userDAO.findByEmail(email);
+//        if (requestingUserOptional.isEmpty()) {
+//            throw new UnauthorizedAccessException("Invalid token or user not found.");
+//        }
+        User requestingUser = user;
 
         // If the requesting user is an admin, they can access any user's profile
         if (requestingUser.getRole() == Role.ADMIN || requestingUser.getId().equals(userId)) {
@@ -166,6 +146,35 @@ public class UserService {
         } else {
             throw new UnauthorizedAccessException("You do not have permission to view this profile.");
         }
+    }
+
+    public User findById(Long id) {
+        return userDAO.findById(id).orElse(null);
+    }
+
+    public User findByEmail(String email) {
+        return userDAO.findByEmail(email).orElse(null);
+    }
+
+    public List<Booking> findAllActiveBookingsList(Long userId){
+        return bookingDAO.findActiveBookings(userId);
+    }
+
+    public User findUserByEmailViaToken(String authHeader){
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new UnauthorizedException("Authorization token is missing or invalid");
+        }
+
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
+
+        // Extract email from the token
+        String email = jwtUtil.extractEmail(token);
+        if (email == null) {
+            throw new UnauthorizedException("Email is missing in the token");
+        }
+
+        User user = findByEmail(email);
+        return user;
     }
 
 }

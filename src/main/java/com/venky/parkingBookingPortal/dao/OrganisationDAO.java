@@ -12,4 +12,6 @@ public interface OrganisationDAO {
     List<Organisation> findAll();
 
     void deleteById(Long id);
+
+    Organisation findOrganisationById(Long id);
 }

@@ -1,17 +1,22 @@
 package com.venky.parkingBookingPortal.controller;
 
+import com.venky.parkingBookingPortal.dto.ParkingSpaceEditRequest;
+import com.venky.parkingBookingPortal.dto.ParkingSpaceRequest;
+import com.venky.parkingBookingPortal.entity.Organisation;
+import com.venky.parkingBookingPortal.entity.Parking;
+import com.venky.parkingBookingPortal.entity.Role;
 import com.venky.parkingBookingPortal.entity.User;
 import com.venky.parkingBookingPortal.exceptions.ForbiddenException;
 import com.venky.parkingBookingPortal.exceptions.UnauthorizedException;
+import com.venky.parkingBookingPortal.service.OrganisationService;
+import com.venky.parkingBookingPortal.service.ParkingService;
 import com.venky.parkingBookingPortal.service.UserService;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -19,11 +24,15 @@ public class AdminController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final OrganisationService organisationService;
+    private final ParkingService parkingService;
 
     @Autowired
-    public AdminController(UserService userService, JwtUtil jwtUtil) {
+    public AdminController(UserService userService, JwtUtil jwtUtil, OrganisationService organisationService, ParkingService parkingService) {
         this.userService = userService;
         this.jwtUtil = jwtUtil;
+        this.organisationService = organisationService;
+        this.parkingService = parkingService;
     }
 
     @DeleteMapping("/delete/{userId}")
@@ -60,4 +69,55 @@ public class AdminController {
         String result = userService.unflagUser(userId);
         return ResponseEntity.ok(result);
     }
+
+    @PostMapping("/addParking")
+    public ResponseEntity<?> addParkingSpace(@RequestHeader("Authorization") String authHeader,
+                                             @RequestBody ParkingSpaceRequest request) {
+        User admin = userService.findUserByEmailViaToken(authHeader);
+        if (admin == null || admin.getRole() != Role.ADMIN) {
+            return ResponseEntity.status(403).body("Access denied: Only admins can add parking spaces.");
+        }
+
+        // Fetch organisation
+        Organisation organisation = organisationService.findById(request.getOrganisationId());
+        if (organisation == null) {
+            return ResponseEntity.badRequest().body("Organisation not found");
+        }
+
+        // Create and save parking space
+        Parking parkingSpace = parkingService.addParkingSpace(organisation, request.getHighestSlots() , request.getName());
+
+        return ResponseEntity.ok(parkingSpace);
+    }
+
+    @PutMapping("/editParking/{parkingId}")
+    public ResponseEntity<?> editParkingSpace(@RequestHeader("Authorization") String authHeader,
+                                              @PathVariable Long parkingId,
+                                              @RequestBody ParkingSpaceEditRequest request) {
+        // Extract user from token
+        User admin = userService.findUserByEmailViaToken(authHeader);
+
+        // Ensure user is an admin
+        if (admin == null || !Role.ADMIN.equals(admin.getRole())) {
+            return ResponseEntity.status(403).body("Access denied: Only admins can modify parking spaces.");
+        }
+
+        // Fetch the existing parking space
+        Parking existingParking = parkingService.findParkingById(parkingId);
+        if (existingParking == null) {
+            return ResponseEntity.badRequest().body("Parking space not found");
+        }
+
+        if(request.getHighestSlots() > 0){
+            existingParking.setHighestSlots(request.getHighestSlots());
+        }
+        if(request.getName() != null){
+            existingParking.setName(request.getName());
+        }
+
+        Parking updatedParking = parkingService.updateParkingSpace(existingParking);
+
+        return ResponseEntity.ok(updatedParking);
+    }
+
 }
