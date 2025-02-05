@@ -128,13 +128,12 @@ public class UserService {
     }
 
 //    public User getProfile(Long userId, String email) {
-    public User getProfile(Long userId, User user) {
+    public User getProfile(Long userId, User requestingUser ) {
 //        // Retrieve the requesting user using the email
 //        Optional<User> requestingUserOptional = userDAO.findByEmail(email);
 //        if (requestingUserOptional.isEmpty()) {
 //            throw new UnauthorizedAccessException("Invalid token or user not found.");
 //        }
-        User requestingUser = user;
 
         // If the requesting user is an admin, they can access any user's profile
         if (requestingUser.getRole() == Role.ADMIN || requestingUser.getId().equals(userId)) {

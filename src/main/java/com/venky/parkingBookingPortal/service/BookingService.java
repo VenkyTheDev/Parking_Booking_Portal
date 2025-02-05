@@ -130,9 +130,8 @@ public class BookingService {
         return "Booking successful!";
     }
 
-    public List<BookingResponse> getBookingHistory(Long userId, User user) {
+    public List<BookingResponse> getBookingHistory(Long userId, User currentUser) {
         // Fetch the user from the database using email (from token)
-        User currentUser = user;
 
         // Allow access if the user is an admin OR if the user is requesting their own history
         if (currentUser.getRole() != Role.ADMIN && !currentUser.getId().equals(userId)) {

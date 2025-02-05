@@ -1,10 +1,13 @@
 package com.venky.parkingBookingPortal.dto;
 
 import com.venky.parkingBookingPortal.entity.Booking;
+import lombok.Getter;
+import lombok.Setter;
 import org.locationtech.jts.geom.Point;
 
 import java.time.LocalDateTime;
-
+@Getter
+@Setter
 public class BookingResponse {
     private Long bookingId;
     private Long parkingId;
@@ -23,28 +26,4 @@ public class BookingResponse {
         this.status = booking.getStatus().name();
     }
 
-    // Getters
-    public Long getBookingId() {
-        return bookingId;
-    }
-
-    public Long getParkingId() {
-        return parkingId;
-    }
-
-    public Point getParkingLocation() {
-        return parkingLocation;
-    }
-
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
-
-    public LocalDateTime getEndTime() {
-        return endTime;
-    }
-
-    public String getStatus() {
-        return status;
-    }
 }

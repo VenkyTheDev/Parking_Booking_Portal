@@ -29,7 +29,7 @@ public class Parking {
     private String name;
 
     @JsonSerialize(using = PointSerializer.class)
-    @Column(columnDefinition = "POINT")
+    @Column(columnDefinition = "geometry(Point, 4326)")
     private Point location;
 
     @Column(nullable = false, name = "total_slots")
