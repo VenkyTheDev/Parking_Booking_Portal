@@ -39,6 +39,11 @@ public class ParkingDAOJpaImpl implements ParkingDAO{
     }
 
     @Override
+    public Parking findParkingId(Long id) {
+        return entityManager.find(Parking.class, id);
+    }
+
+    @Override
     public void deleteById(Long id) {
         Parking parking = entityManager.find(Parking.class, id);
         if (parking != null) {

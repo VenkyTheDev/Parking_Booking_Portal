@@ -3,17 +3,16 @@ package com.venky.parkingBookingPortal.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import java.util.List;
 
 @Entity
-@Table(name = "organisations")  // Table name in the database
+@Table(name = "organisations")
 @Getter
 @Setter
 public class Organisation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")  // Column name in the database
+    @Column(name = "id")
     private Long id;
 
     @Column(nullable = false, length = 255, name = "name")
@@ -29,8 +28,10 @@ public class Organisation {
     private String location;
 
     @Column(nullable = false, name = "total_parking_slots")
-    private Integer totalParkingSlots;
+    private Integer totalParkingLots;
 
-    @OneToMany(mappedBy = "organisation", cascade = CascadeType.ALL)
-    private List<User> users;  // One Organisation has many Users
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
+    // Remove bidirectional relationship. No need to maintain a list of users in the organisation entity.
 }

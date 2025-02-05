@@ -1,11 +1,10 @@
 package com.venky.parkingBookingPortal.entity;
-
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "users")  // Explicitly naming the table
+@Table(name = "users")
 @Getter
 @Setter
 public class User {
@@ -16,7 +15,7 @@ public class User {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "organisation_id", nullable = false)  // Foreign Key to Organisation
+    @JoinColumn(name = "organisation_id", nullable = false)
     private Organisation organisation;
 
     @Column(nullable = false, length = 255)
@@ -30,7 +29,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role;  // Enum for User/Admin
+    private Role role;
 
     @Column(length = 255)
     private String department;
@@ -38,13 +37,17 @@ public class User {
     @Column(length = 20)
     private String contactNumber;
 
-    @Column(columnDefinition = "TEXT")  // Storing profile picture as a URL or Base64 string
+    @Column(columnDefinition = "TEXT")
     private String profilePic;
 
-    @Column(columnDefinition = "GEOMETRY")  // For storing location
+    @Column(columnDefinition = "GEOMETRY")
     private String currentLocation;
 
-    @Column(nullable = false)
-    private Long allowedAfter;  // Epoch timestamp for permission
+    @Column(nullable = true)
+    private Long allowedAfter;
 
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
+    // No bidirectional reference to bookings. This helps avoid circular dependencies.
 }
