@@ -41,6 +41,9 @@ public class Parking {
     @Column(nullable = false)
     private boolean isDeleted = false;
 
+    @Column(columnDefinition = "TEXT")
+    private String parkingImage;
+
     public void decrementSlots() {
         if (this.totalSlots > 0) {
             this.totalSlots -= 1;

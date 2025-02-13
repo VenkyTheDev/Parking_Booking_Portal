@@ -44,8 +44,13 @@ public class BookingDAOJpaImpl implements BookingDAO {
     }
 
     @Override
+//    public List<Booking> findAll() {
+//        return entityManager.createQuery("SELECT b FROM Booking b", Booking.class).getResultList();
+//    }
     public List<Booking> findAll() {
-        return entityManager.createQuery("SELECT b FROM Booking b", Booking.class).getResultList();
+        return entityManager.createQuery(
+                        "SELECT b FROM Booking b JOIN FETCH b.user", Booking.class)
+                .getResultList();
     }
 
     @Override
@@ -151,8 +156,10 @@ public class BookingDAOJpaImpl implements BookingDAO {
 
     @Override
     public long countByParkingAndTimeRange(Long parkingId, LocalDateTime startTime, LocalDateTime endTime) {
+//        String jpql = "SELECT COUNT(b) FROM Booking b WHERE b.parking.id = :parkingId AND " +
+//                "((b.startTime BETWEEN :startTime AND :endTime) OR (b.endTime BETWEEN :startTime AND :endTime))";
         String jpql = "SELECT COUNT(b) FROM Booking b WHERE b.parking.id = :parkingId AND " +
-                "((b.startTime BETWEEN :startTime AND :endTime) OR (b.endTime BETWEEN :startTime AND :endTime))";
+                "((b.startTime BETWEEN :startTime AND :endTime) OR (b.endTime BETWEEN :startTime AND :endTime) OR (b.startTime <= :startTime AND :endTime >= :endTime))";
         TypedQuery<Long> query = entityManager.createQuery(jpql, Long.class);
         query.setParameter("parkingId", parkingId);
         query.setParameter("startTime", startTime);
@@ -206,6 +213,25 @@ public class BookingDAOJpaImpl implements BookingDAO {
         query.setParameter("endTime", endTime);
 
         return query.getResultList();
+    }
+
+    @Override
+    @Transactional
+    public List<Booking> getAllBookingHistory(User user, int page, int size) {
+        return entityManager.createQuery(
+                        "SELECT b FROM Booking b WHERE b.user = :user ORDER BY b.createdAt DESC", Booking.class)
+                .setParameter("user", user)
+                .setFirstResult(page * size) // Offset calculation
+                .setMaxResults(size) // Limit the number of results
+                .getResultList();
+    }
+
+    @Override
+    public long getTotalBookingCount(User user) {
+        return entityManager.createQuery(
+                        "SELECT COUNT(b) FROM Booking b WHERE b.user = :user", Long.class)
+                .setParameter("user", user)
+                .getSingleResult();
     }
 
     @Override

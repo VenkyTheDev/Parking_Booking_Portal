@@ -1,6 +1,7 @@
 package com.venky.parkingBookingPortal.dao;
 
 import com.venky.parkingBookingPortal.entity.Booking;
+import com.venky.parkingBookingPortal.entity.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,4 +37,7 @@ public interface BookingDAO {
 
     public List<Booking> findAllActiveBookingsBeforeEndTime(Long parkingId, LocalDateTime startTime ,LocalDateTime endTime);
 
+    List<Booking> getAllBookingHistory(User user, int page, int size);
+
+    long getTotalBookingCount(User user);
 }

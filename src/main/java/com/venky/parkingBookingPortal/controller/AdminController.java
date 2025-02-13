@@ -1,6 +1,7 @@
 package com.venky.parkingBookingPortal.controller;
 
 import com.venky.parkingBookingPortal.dto.ErrorResponse;
+import com.venky.parkingBookingPortal.dto.GetAllUsersRequest;
 import com.venky.parkingBookingPortal.dto.ParkingSpaceEditRequest;
 import com.venky.parkingBookingPortal.dto.ParkingSpaceRequest;
 import com.venky.parkingBookingPortal.entity.Organisation;
@@ -13,12 +14,23 @@ import com.venky.parkingBookingPortal.service.OrganisationService;
 import com.venky.parkingBookingPortal.service.ParkingService;
 import com.venky.parkingBookingPortal.service.UserService;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
+
+@Slf4j
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
@@ -35,6 +47,8 @@ public class AdminController {
         this.organisationService = organisationService;
         this.parkingService = parkingService;
     }
+
+    GeometryFactory geometryFactory = new GeometryFactory();
 
     @DeleteMapping("/delete/{userId}")
     public ResponseEntity<?> deleteUser(@PathVariable Long userId,
@@ -56,12 +70,13 @@ public class AdminController {
     }
 
     @PostMapping("/flag/{userId}")
-    public ResponseEntity<String> flagUser(@PathVariable Long userId, @RequestBody int days) {
+    public ResponseEntity<User> flagUser(@PathVariable Long userId, @RequestBody int days) {
         try {
-            String result = userService.flagUser(userId, days);
-            return ResponseEntity.ok(result);
+            log.info("I'm in the try block");
+            User user = userService.flagUser(userId, days);
+            return ResponseEntity.ok(user);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while flagging the user.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
@@ -72,9 +87,9 @@ public class AdminController {
     }
 
     @PostMapping("/addParking")
-    public ResponseEntity<?> addParkingSpace(@RequestHeader("Authorization") String authHeader,
+    public ResponseEntity<?> addParkingSpace(HttpServletRequest req,
                                              @RequestBody ParkingSpaceRequest request) {
-        User admin = userService.findUserByEmailViaToken(authHeader);
+        User admin = userService.findUserByEmailViaCookie(req);
         if (admin == null || admin.getRole() != Role.ADMIN) {
             return ResponseEntity.status(403).body(new ErrorResponse("Access denied: Only admins can add parking spaces.", 403));
         }
@@ -91,12 +106,11 @@ public class AdminController {
         return ResponseEntity.ok(parkingSpace);
     }
 
-    @PutMapping("/editParking/{parkingId}")
-    public ResponseEntity<?> editParkingSpace(@RequestHeader("Authorization") String authHeader,
-                                              @PathVariable Long parkingId,
+    @PutMapping("/editParking")
+    public ResponseEntity<?> editParkingSpace(HttpServletRequest req,
                                               @RequestBody ParkingSpaceEditRequest request) {
         // Extract user from token
-        User admin = userService.findUserByEmailViaToken(authHeader);
+        User admin = userService.findUserByEmailViaCookie(req);
 
         // Ensure user is an admin
         if (admin == null || !Role.ADMIN.equals(admin.getRole())) {
@@ -104,7 +118,7 @@ public class AdminController {
         }
 
         // Fetch the existing parking space
-        Parking existingParking = parkingService.findParkingById(parkingId);
+        Parking existingParking = parkingService.findParkingById(request.getId());
         if (existingParking == null) {
             return ResponseEntity.badRequest().body("Parking space not found");
         }
@@ -116,9 +130,29 @@ public class AdminController {
             existingParking.setName(request.getName());
         }
 
+//        if(request.getImage() != null){
+//            existingParking.setParkingImage(request.getImage());
+//        }
+
+        if (request.getLatitude() != null && request.getLongitude() != null) {
+            Coordinate coordinate = new Coordinate(request.getLongitude(), request.getLatitude()); // Longitude first
+            Point point = geometryFactory.createPoint(coordinate);
+            existingParking.setLocation(point);
+        }
+
+
         Parking updatedParking = parkingService.updateParkingSpace(existingParking);
 
         return ResponseEntity.ok(updatedParking);
     }
 
+    @PostMapping("/getall")
+    public ResponseEntity<List<User>> getAllUsers(@RequestBody GetAllUsersRequest request) {
+        if (request.getRole() == null || !request.getRole().equals("ADMIN")) {
+            throw new ForbiddenException("Access denied: Only admins can get users.");
+        }
+
+        Optional<List<User>> users = userService.getAllUsers();
+        return users.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
 }

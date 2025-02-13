@@ -57,8 +57,8 @@ public class Booking {
     @Column(unique = true, nullable = false, name = "id")
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne

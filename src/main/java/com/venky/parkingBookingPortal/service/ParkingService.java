@@ -9,6 +9,7 @@ import com.venky.parkingBookingPortal.entity.Booking;
 import com.venky.parkingBookingPortal.entity.Organisation;
 import com.venky.parkingBookingPortal.entity.Parking;
 import com.venky.parkingBookingPortal.exceptions.NotFoundException;
+import com.venky.parkingBookingPortal.exceptions.ParkingSlotNotAvailableException;
 import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
@@ -16,9 +17,17 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cglib.core.Local;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.management.Query;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -51,18 +60,21 @@ public class ParkingService {
 //        }
 //    }
 
-    public int getAvailableSlots(Long parkingId) {
-    //        Parking parking = parkingDAO.findById(parkingId)
-    //                .orElseThrow(() -> new NotFoundException("Parking lot not found"));
-        try {
-//            Parking parking = parkingDAO.findParkingId(parkingId);
+//    public int getAvailableSlots(Long parkingId) {
+//    //        Parking parking = parkingDAO.findById(parkingId)
+//    //                .orElseThrow(() -> new NotFoundException("Parking lot not found"));
+//        try {
+//           Parking parking = parkingDAO.findParkingId(parkingId);
 //            return parking.getTotalSlots();
-            int availableSlots = 0;
-            return availableSlots;
-        } catch (Exception e) {
-            throw new NotFoundException("Parking lot not found");
-        }
-    }
+//            int availableSlots = 0;
+//            return availableSlots;
+//        } catch (Exception e) {
+//            throw new NotFoundException("Parking lot not found");
+//        }
+//    }
+
+@Value("${upload.Parking}")
+private String UPLOAD_DIR;
 
     @Scheduled(fixedRate = 60000)  // Runs every minute (adjust as needed)
     public void updateAvailableSlotsForToday() {
@@ -151,4 +163,44 @@ public class ParkingService {
         return parkingDAO.findAll();
     }
 
+    public LocalDateTime getNearestParkingTime(Long parkingId, LocalDateTime startTime, LocalDateTime endTime) {
+        LocalDateTime nearestAvailableTime = parkingDAO.getNearestAvailableParkingTime(parkingId, startTime, endTime);
+
+//        // You can add custom logic here, for example, throwing exceptions if no time is found
+//        if (nearestAvailableTime == null) {
+//            throw new ParkingSlotNotAvailableException("No available parking slot found.");
+//        }
+
+        return nearestAvailableTime;
+    }
+
+    public Parking uploadParkingImage(MultipartFile file, Long parkingId) throws IOException {
+        // Retrieve the parking entity
+        Parking parking = parkingDAO.findById(parkingId)
+                .orElseThrow(() -> new RuntimeException("Parking not found"));
+
+        // Generate a unique filename for the uploaded file
+        String filename = parkingId + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+
+        // Create the full path for where the file will be stored
+        Path path = Paths.get(UPLOAD_DIR + filename);
+
+        // Ensure the directory exists; if not, create it
+        Files.createDirectories(path.getParent());  // This will create the directory if it doesn't exist
+
+        // Transfer the file to the specified path
+        try {
+            file.transferTo(path.toFile()); // Save the file to disk
+        } catch (IOException e) {
+            throw new IOException("Failed to upload file: " + e.getMessage(), e);
+        }
+
+        // Update the parking image field with the new filename
+        parking.setParkingImage(filename);
+
+        // Save the updated parking entity back to the database
+        parkingDAO.save(parking);
+
+        return parking;  // Return the updated parking with the new image
+    }
 }
