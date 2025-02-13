@@ -36,16 +36,28 @@ public class ParkingController {
 //        }
 //    }
 
+//    @GetMapping("/getall")
+//    public ResponseEntity<?> getAllParkings() {
+//        try {
+//            return ResponseEntity.ok(parkingService.getAllParkings());
+//        } catch (NotFoundException e) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
+//        }
+//    }
+
     @GetMapping("/getall")
-    public ResponseEntity<?> getAllParkings() {
+    public ResponseEntity<?> getAllParkings(@RequestParam(required = false) LocalDateTime endTime) {
         try {
-            return ResponseEntity.ok(parkingService.getAllParkings());
+            return ResponseEntity.ok(parkingService.getAllParkings(endTime));
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
         }
     }
+
 
     @PostMapping("/nearestSlot")
     public ResponseEntity<?> getAvailableSlots(@RequestBody GetAvailableSlotsRequest request) {

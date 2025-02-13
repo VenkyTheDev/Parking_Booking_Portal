@@ -5,6 +5,7 @@ import com.venky.parkingBookingPortal.dao.OrganisationDAO;
 import com.venky.parkingBookingPortal.dao.ParkingDAO;
 import com.venky.parkingBookingPortal.dto.GetAvailableSlotsRequest;
 import com.venky.parkingBookingPortal.dto.ParkingSpaceRequest;
+import com.venky.parkingBookingPortal.dto.ParkingsResponse;
 import com.venky.parkingBookingPortal.entity.Booking;
 import com.venky.parkingBookingPortal.entity.Organisation;
 import com.venky.parkingBookingPortal.entity.Parking;
@@ -30,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Log
@@ -159,9 +161,26 @@ private String UPLOAD_DIR;
         return Math.max(0 , totalActiveSlots - totalActiveBookings);
     }
 
-    public List<Parking> getAllParkings() {
-        return parkingDAO.findAll();
+    public List<ParkingsResponse> getAllParkings(LocalDateTime endTime) {
+        return parkingDAO.findAll().stream()
+                .map(parking -> {
+                    int availableSlots = (endTime != null) ? fetchingAvailableSlots(parking.getId(), LocalDateTime.now(), endTime) : 0;
+                    return new ParkingsResponse(
+                            parking.getId(),
+                            parking.getOrganisation(),
+                            parking.getName(),
+                            parking.getLocation(),
+                            parking.getTotalSlots(),
+                            parking.getHighestSlots(),
+                            parking.isDeleted(),
+                            parking.getParkingImage(),
+                            availableSlots,
+                            endTime  // Setting nearestParkingTime directly
+                    );
+                })
+                .collect(Collectors.toList());
     }
+
 
     public LocalDateTime getNearestParkingTime(Long parkingId, LocalDateTime startTime, LocalDateTime endTime) {
         LocalDateTime nearestAvailableTime = parkingDAO.getNearestAvailableParkingTime(parkingId, startTime, endTime);
