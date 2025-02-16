@@ -33,5 +33,4 @@ public class Organisation {
     @Column(nullable = false)
     private boolean isDeleted = false;
 
-    // Remove bidirectional relationship. No need to maintain a list of users in the organisation entity.
 }

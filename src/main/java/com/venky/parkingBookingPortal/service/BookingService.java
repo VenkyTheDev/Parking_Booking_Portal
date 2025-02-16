@@ -15,18 +15,13 @@ import com.venky.parkingBookingPortal.exceptions.NotFoundException;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
-import org.hibernate.query.Page;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
-import java.awt.print.Pageable;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,93 +50,6 @@ public class BookingService {
         this.userService = userService;
         this.parkingService = parkingService;
     }
-
-//    public String bookParking(BookingRequest request) {
-//        // Retrieve user by userId
-//        Optional<User> userOptional = userDAO.findById(request.getUserId());
-//        if (userOptional.isEmpty()) {
-//            return "User not found!";
-//        }
-//
-//        User user = userOptional.get();
-//
-//        //Checking for the flag
-//        Long allowedAfter = user.getAllowedAfter();
-//        long nowTime = Instant.now().toEpochMilli();
-//        if (allowedAfter != null && allowedAfter > nowTime) {
-//            return "You are not allowed to book parking! till " + allowedAfter + " milliseconds";
-//        }
-//        LocalDateTime now = LocalDateTime.now().plusMinutes(1);
-//        // Retrieve parking by parkingId
-//        Optional<Parking> parkingOptional = parkingDAO.findById(request.getParkingId());
-//        if (parkingOptional.isEmpty()) {
-//            return "Parking lot not found!";
-//        }
-//
-//        Parking parking = parkingOptional.get();
-//
-//        if (user.getRole() != Role.ADMIN && request.getStartTime().isAfter(now)) {
-//            return "Pre-booking is not allowed!";
-//        }
-//        //Checking Distance
-//        if(parking.getLocation() == null){
-//            throw new ForbiddenException("Parking location is null!");
-//        }
-//        Point parkingLocation = parking.getLocation();
-//        try {
-//            Point userLocation = geometryFactory.createPoint(new Coordinate(request.getLongitude(), request.getLatitude()));
-//            if(userLocation.isEmpty()){
-//                throw new ForbiddenException("Parking location is empty!");
-//            }
-//            if ((calculateDistance(parkingLocation, userLocation) > 100) && user.getRole() != Role.ADMIN) {
-//                return "Please come closer to the parking location";
-//            }
-//        } catch (Exception e) {
-//            throw new IllegalArgumentException();
-//        }
-//
-//        // Check if there are available slots
-//        int availableSlots = parkingService.fetchingAvailableSlots(request.getParkingId(), request.getStartTime(), request.getEndTime());
-//        if (availableSlots <= 0) {
-//            return "No available slots!";
-//        }
-//
-//
-//        // Check if the user already has an active booking (Admins can book multiple slots)
-//        if (user.getRole() != Role.ADMIN) {
-//            Optional<Booking> latestBooking = bookingDAO.findFirstByUserIdOrderByStartTimeDesc(user.getId());
-//
-//            if (latestBooking.isPresent()) {
-//                Booking lastBooking = latestBooking.get();
-//
-//                // If the last booking is CANCELLED or doesn't overlap with the requested time, allow booking
-//
-//                if (lastBooking.getStatus() == Booking.Status.CANCELLED || lastBooking.getEndTime().isBefore(request.getStartTime())) {
-//                    // Proceed with the booking
-//                } else {
-//                    return "You already have an active booking overlapping with the requested time!";
-//                }
-//            }
-//        }
-//
-//
-//        // Create a new booking
-//        Booking booking = new Booking();
-//        booking.setUser(user);
-//        booking.setParking(parking);
-//        booking.setStartTime(request.getStartTime());
-//        booking.setEndTime(request.getEndTime());
-//        booking.setStatus(Booking.Status.SUCCESS);
-//
-//        // Save the booking
-//        bookingDAO.save(booking);
-//
-//        // Decrement the available slots in parking
-////        parking.decrementSlots();
-//        parkingDAO.save(parking);
-//
-//        return "Booking successful!";
-//    }
 
 public BookingResponse bookParking(BookingRequest request) {
     // Retrieve user by userId

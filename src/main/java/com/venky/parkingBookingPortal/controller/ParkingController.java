@@ -24,28 +24,6 @@ public class ParkingController {
         this.parkingService = parkingService;
     }
 
-//    @GetMapping("/{parkingId}/available-slots")
-//    public ResponseEntity<?> getAvailableSlots(@PathVariable Long parkingId) {
-//        try {
-//            int availableSlots = parkingService.getAvailableSlots(parkingId);
-//            return ResponseEntity.ok(availableSlots);
-//        } catch (NotFoundException e) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
-//        }
-//    }
-
-//    @GetMapping("/getall")
-//    public ResponseEntity<?> getAllParkings() {
-//        try {
-//            return ResponseEntity.ok(parkingService.getAllParkings());
-//        } catch (NotFoundException e) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
-//        }
-//    }
 
     @GetMapping("/getall")
     public ResponseEntity<?> getAllParkings(@RequestParam(required = false) LocalDateTime endTime) {
@@ -71,15 +49,11 @@ public class ParkingController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("parkingId") Long parkingId) {
         try {
-            // Upload the parking image using the service and get the updated Parking object
             Parking updatedParking = parkingService.uploadParkingImage(file, parkingId);
 
-            // Return the updated Parking in the response with HTTP 200 OK
             return ResponseEntity.ok(updatedParking);
         } catch (IOException e) {
             e.printStackTrace();
-
-            // Return error response with INTERNAL_SERVER_ERROR status
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
         }

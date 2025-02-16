@@ -48,6 +48,4 @@ public class User {
 
     @Column(nullable = false)
     private boolean isDeleted = false;
-
-    // No bidirectional reference to bookings. This helps avoid circular dependencies.
 }

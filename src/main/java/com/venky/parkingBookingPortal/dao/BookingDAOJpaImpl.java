@@ -44,9 +44,6 @@ public class BookingDAOJpaImpl implements BookingDAO {
     }
 
     @Override
-//    public List<Booking> findAll() {
-//        return entityManager.createQuery("SELECT b FROM Booking b", Booking.class).getResultList();
-//    }
     public List<Booking> findAll() {
         return entityManager.createQuery(
                         "SELECT b FROM Booking b JOIN FETCH b.user", Booking.class)
@@ -156,8 +153,6 @@ public class BookingDAOJpaImpl implements BookingDAO {
 
     @Override
     public long countByParkingAndTimeRange(Long parkingId, LocalDateTime startTime, LocalDateTime endTime) {
-//        String jpql = "SELECT COUNT(b) FROM Booking b WHERE b.parking.id = :parkingId AND " +
-//                "((b.startTime BETWEEN :startTime AND :endTime) OR (b.endTime BETWEEN :startTime AND :endTime))";
         String jpql = "SELECT COUNT(b) FROM Booking b WHERE b.parking.id = :parkingId AND " +
                 "((b.startTime BETWEEN :startTime AND :endTime) OR (b.endTime BETWEEN :startTime AND :endTime) OR (b.startTime <= :startTime AND :endTime >= :endTime))";
         TypedQuery<Long> query = entityManager.createQuery(jpql, Long.class);
@@ -173,25 +168,16 @@ public class BookingDAOJpaImpl implements BookingDAO {
         String jpql = "SELECT CASE WHEN COUNT(b) > 0 THEN TRUE ELSE FALSE END " +
                 "FROM Booking b WHERE b.parking.id = :parkingId AND b.endTime < :endTime";
 
-        // Create the query using EntityManager
         Query query = entityManager.createQuery(jpql);
         query.setParameter("parkingId", parkingId);
         query.setParameter("endTime", endTime);
 
-        // Execute the query and get the result (true/false)
         Boolean result = (Boolean) query.getSingleResult();
         return result != null && result;  // Return the result as boolean
     }
 
     @Override
     public List<Booking> findAllActiveBookingsBeforeEndTime(Long parkingId, LocalDateTime startTime, LocalDateTime endTime) {
-//        String queryStr = "SELECT b FROM Booking b " +
-//                "WHERE b.parking.id = :parkingId " +
-//                "AND b.status = 'SUCCESS' " +
-//                "AND b.startTime < :endTime " +   // Booking starts before the provided endTime
-//                "AND b.endTime > :startTime " +
-//                "AND b.processed = false "+// Booking ends after the provided startTime
-//                "ORDER BY b.startTime DESC, b.createdAt DESC, b.endTime ASC";
 
         String queryStr = "SELECT b FROM Booking b " +
                 "WHERE b.parking.id = :parkingId " +
@@ -218,6 +204,13 @@ public class BookingDAOJpaImpl implements BookingDAO {
     @Override
     @Transactional
     public List<Booking> getAllBookingHistory(User user, int page, int size) {
+        if(user.getRole() == Role.ADMIN){
+            return entityManager.createQuery(
+                            "SELECT b FROM Booking b ORDER BY b.createdAt DESC", Booking.class)
+                    .setFirstResult(page * size) // Offset calculation
+                    .setMaxResults(size) // Limit the number of results
+                    .getResultList();
+        }
         return entityManager.createQuery(
                         "SELECT b FROM Booking b WHERE b.user = :user ORDER BY b.createdAt DESC", Booking.class)
                 .setParameter("user", user)
@@ -228,6 +221,11 @@ public class BookingDAOJpaImpl implements BookingDAO {
 
     @Override
     public long getTotalBookingCount(User user) {
+        if(user.getRole() == Role.ADMIN){
+            return entityManager.createQuery(
+                            "SELECT COUNT(b) FROM Booking b", Long.class)
+                    .getSingleResult();
+        }
         return entityManager.createQuery(
                         "SELECT COUNT(b) FROM Booking b WHERE b.user = :user", Long.class)
                 .setParameter("user", user)

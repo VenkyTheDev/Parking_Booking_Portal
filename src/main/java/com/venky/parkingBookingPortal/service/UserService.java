@@ -51,9 +51,6 @@ public class UserService {
         this.jwtUtil = jwtUtil;
     }
 
-//    @Value("${upload.dir}")
-//    private String UPLOAD_DIR;
-
     @Value("${upload.directory}")
     private String UPLOAD_DIR;
 
@@ -168,11 +165,6 @@ public class UserService {
 
 //    public User getProfile(Long userId, String email) {
     public User getProfile(Long userId, User requestingUser ) {
-//        // Retrieve the requesting user using the email
-//        Optional<User> requestingUserOptional = userDAO.findByEmail(email);
-//        if (requestingUserOptional.isEmpty()) {
-//            throw new UnauthorizedAccessException("Invalid token or user not found.");
-//        }
 
         // If the requesting user is an admin, they can access any user's profile
         if (requestingUser.getRole() == Role.ADMIN || requestingUser.getId().equals(userId)) {
@@ -198,22 +190,6 @@ public class UserService {
         return bookingDAO.findActiveBookings(userId);
     }
 
-//    public User findUserByEmailViaToken(String authHeader){
-//        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-//            throw new UnauthorizedException("Authorization token is missing or invalid");
-//        }
-//
-//        String token = authHeader.substring(7); // Remove "Bearer " prefix
-//
-//        // Extract email from the token
-//        String email = jwtUtil.extractEmail(token);
-//        if (email == null) {
-//            throw new UnauthorizedException("Email is missing in the token");
-//        }
-//
-//        User user = findByEmail(email);
-//        return user;
-//    }
 
     public User findUserByEmailViaToken(String token) {
         if (token == null || token.isEmpty()) {

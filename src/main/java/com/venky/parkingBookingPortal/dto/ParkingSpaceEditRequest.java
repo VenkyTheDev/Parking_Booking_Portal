@@ -2,9 +2,6 @@ package com.venky.parkingBookingPortal.dto;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.locationtech.jts.geom.Point;
-
-import java.awt.*;
 
 @Getter
 @Setter

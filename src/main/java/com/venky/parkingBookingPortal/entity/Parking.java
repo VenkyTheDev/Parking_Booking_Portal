@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.locationtech.jts.geom.Point;
 
-import java.util.List;
 
 
 @Entity
@@ -50,11 +49,10 @@ public class Parking {
         } else {
             throw new IllegalArgumentException("No available slots");
         }
-    }// One Parking → Many Bookings
+    }
 
     public void incrementSlots() {
             this.totalSlots++;
     }
 
-    // Removed the @OneToMany relationship with Booking to avoid cyclic dependency.
 }

@@ -12,6 +12,7 @@ import com.venky.parkingBookingPortal.entity.Parking;
 import com.venky.parkingBookingPortal.exceptions.NotFoundException;
 import com.venky.parkingBookingPortal.exceptions.ParkingSlotNotAvailableException;
 import lombok.extern.java.Log;
+import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Log
-@Slf4j
+@Log4j2
 public class ParkingService {
 
     private final ParkingDAO parkingDAO;
@@ -50,30 +51,6 @@ public class ParkingService {
         this.bookingDAO = bookingDAO;
         this.organisationDAO = organisationDAO;
     }
-
-//    public int getAvailableSlots(Long parkingId) {
-////        Parking parking = parkingDAO.findById(parkingId)
-////                .orElseThrow(() -> new NotFoundException("Parking lot not found"));
-//        try {
-//            Parking parking = parkingDAO.findParkingId(parkingId);
-//            return parking.getTotalSlots();
-//        } catch (Exception e) {
-//            throw new NotFoundException("Parking lot not found");
-//        }
-//    }
-
-//    public int getAvailableSlots(Long parkingId) {
-//    //        Parking parking = parkingDAO.findById(parkingId)
-//    //                .orElseThrow(() -> new NotFoundException("Parking lot not found"));
-//        try {
-//           Parking parking = parkingDAO.findParkingId(parkingId);
-//            return parking.getTotalSlots();
-//            int availableSlots = 0;
-//            return availableSlots;
-//        } catch (Exception e) {
-//            throw new NotFoundException("Parking lot not found");
-//        }
-//    }
 
 @Value("${upload.Parking}")
 private String UPLOAD_DIR;
@@ -162,6 +139,7 @@ private String UPLOAD_DIR;
     }
 
     public List<ParkingsResponse> getAllParkings(LocalDateTime endTime) {
+//        log.info(endTime.toString());
         return parkingDAO.findAll().stream()
                 .map(parking -> {
                     int availableSlots = (endTime != null) ? fetchingAvailableSlots(parking.getId(), LocalDateTime.now(), endTime) : 0;

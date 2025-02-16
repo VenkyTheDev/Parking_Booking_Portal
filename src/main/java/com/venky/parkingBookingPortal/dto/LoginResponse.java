@@ -3,18 +3,6 @@ package com.venky.parkingBookingPortal.dto;
 import com.venky.parkingBookingPortal.entity.User;
 import lombok.Getter;
 import lombok.Setter;
-
-//import lombok.AllArgsConstructor;
-//import lombok.Getter;
-//import lombok.Setter;
-//
-//@Getter
-//@Setter
-//@AllArgsConstructor
-//public class LoginResponse {
-//    private String token;
-//    private String message;
-//}
 @Getter
 @Setter
 public class LoginResponse {

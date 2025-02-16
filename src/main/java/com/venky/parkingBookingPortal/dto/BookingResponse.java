@@ -16,11 +16,9 @@ public class BookingResponse {
     private LocalDateTime endTime;
     private String status;
 
-    // Error handling fields
     private String errorMessage;
     private int statusCode;
 
-    // Constructor for successful booking response
     public BookingResponse(Booking booking) {
         this.bookingId = booking.getId();
         this.parkingId = booking.getParking().getId();
@@ -30,7 +28,6 @@ public class BookingResponse {
         this.status = booking.getStatus().name();
     }
 
-    // Constructor for error response
     public BookingResponse(int statusCode, String errorMessage) {
         this.errorMessage = errorMessage;
         this.statusCode = statusCode;

@@ -33,41 +33,12 @@ public class AuthController {
         this.authService = authService;
     }
 
-//    @PostMapping("/signup")
-//    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
-//        try{
-//            String token = authService.registerUser(request);
-//            return ResponseEntity.ok(new LoginResponse(token, "User registered successfully!"));
-//        } catch (Exception e){
-//            return ResponseEntity.ok(new ErrorResponse(e.getMessage(), HttpStatus.NOT_FOUND.value()));
-//        }
-//    }
-
-//    @PostMapping("/login")
-//    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
-//        try {
-//            String token = authService.authenticateUser(loginRequest);
-//            if (token != null) {
-//                return ResponseEntity.ok(new LoginResponse(token, "Login successful!"));
-//            } else {
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials.");
-//            }
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-//        }
-//    }
-
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
         try {
-            // Register the user and retrieve both the user details and token
-//            LoginResponse loginResponse = authService.registerUser(request);
             User loginResponse = authService.registerUser(request);
-
-            // Return the user details and token in the response
             return ResponseEntity.ok(loginResponse);
         } catch (Exception e) {
-            // Return error response with the message and status code
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ErrorResponse(e.getMessage(), HttpStatus.NOT_FOUND.value()));
         }
@@ -76,7 +47,6 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         try {
-            // Authenticate the user and retrieve both the user details and token
             LoginResponse loginResponse = authService.authenticateUser(loginRequest, response);
 
             if (loginResponse != null) {

@@ -100,6 +100,10 @@ public class AdminController {
             return ResponseEntity.badRequest().body(new ErrorResponse("Organisation not found", 404));
         }
 
+        if(request.getLatitude() == null || request.getLongitude() == null){
+            return ResponseEntity.badRequest().body(new ErrorResponse("Unable to get the location", 404));
+        }
+
         // Create and save parking space
         Parking parkingSpace = parkingService.addParkingSpace(request);
 
