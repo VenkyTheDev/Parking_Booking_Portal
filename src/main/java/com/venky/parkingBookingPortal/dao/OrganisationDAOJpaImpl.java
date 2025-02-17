@@ -1,13 +1,16 @@
 package com.venky.parkingBookingPortal.dao;
 
+import com.venky.parkingBookingPortal.dto.OrganisaitonRequest;
 import com.venky.parkingBookingPortal.entity.Organisation;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+@Slf4j
 @Repository
 @Transactional
 public class OrganisationDAOJpaImpl implements OrganisationDAO {
@@ -50,5 +53,21 @@ public class OrganisationDAOJpaImpl implements OrganisationDAO {
     @Override
     public Organisation findOrganisationById(Long id) {
         return entityManager.find(Organisation.class, id);  // Fetching Organisation by ID using EntityManager
+    }
+
+    @Override
+    public Organisation add(OrganisaitonRequest organisationRequest) {
+        Organisation organisation = new Organisation();
+        organisation.setName(organisationRequest.getName());
+        organisation.setAddress(organisationRequest.getAddress());
+        organisation.setContactDetails(organisationRequest.getContactDetails());
+        organisation.setLocation(organisationRequest.getLocation());
+        if(organisation.getTotalParkingLots() == null){
+            organisation.setTotalParkingLots(organisationRequest.getTotalParkingSlots());
+            log.info("This is the total number of parking lots in this organisation");
+        }
+        organisation.setTotalParkingLots(organisation.getTotalParkingLots());
+        entityManager.persist(organisation);
+        return organisation;
     }
 }

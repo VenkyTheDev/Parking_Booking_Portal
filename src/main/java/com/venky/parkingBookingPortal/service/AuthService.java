@@ -40,7 +40,6 @@ public class AuthService {
             throw new RuntimeException("Email is already taken");
         }
 
-        // Create a new user object
         User user = new User();
         user.setName(signupRequest.getName());
         user.setEmail(signupRequest.getEmail());
@@ -49,13 +48,10 @@ public class AuthService {
         user.setOrganisation(organisation);
         user.setRole(Role.USER);
 
-        // Save the user to the database
         userDAO.save(user);
 
-        // Generate JWT token for the newly registered user
         String jwtToken = jwtUtil.generateToken(user.getEmail());
 
-        // Return LoginResponse containing full user object and token
         return user;
     }
 

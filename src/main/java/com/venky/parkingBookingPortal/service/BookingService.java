@@ -111,6 +111,7 @@ public BookingResponse bookParking(BookingRequest request) {
         if (userLocation.isEmpty()) {
             return new BookingResponse(HttpStatus.FORBIDDEN.value(),"Parking location is empty!");
         }
+        //Below block is for the testing
 //        if ((calculateDistance(parkingLocation, userLocation) > 100)    ) {
 //            return new BookingResponse(HttpStatus.FORBIDDEN.value(),"Please come closer to the parking location");
 //        }

@@ -78,7 +78,6 @@ public class AuthController {
             log.info("JWT cookie is invalid");
         }
 
-        // Return response with message
         Map<String, String> responseBody = new HashMap<>();
         responseBody.put("message", "Logout Successful");
 
