@@ -34,9 +34,9 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request , HttpServletResponse response) {
         try {
-            User loginResponse = authService.registerUser(request);
+            User loginResponse = authService.registerUser(request , response);
             return ResponseEntity.ok(loginResponse);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

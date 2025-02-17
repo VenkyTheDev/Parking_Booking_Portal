@@ -12,6 +12,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -33,7 +34,7 @@ public class AuthService {
     }
 
 
-    public User registerUser(SignupRequest signupRequest) {
+    public User registerUser(SignupRequest signupRequest , HttpServletResponse httpServletResponse) {
         // Check if the email already exists
         Optional<User> existingUser = userDAO.findByEmail(signupRequest.getEmail());
         if (existingUser.isPresent()) {
@@ -51,6 +52,16 @@ public class AuthService {
         userDAO.save(user);
 
         String jwtToken = jwtUtil.generateToken(user.getEmail());
+
+        // Create an HTTP-only cookie with the JWT token
+        Cookie jwtCookie = new Cookie("jwt", jwtToken);
+        jwtCookie.setHttpOnly(true); // Protect against XSS
+        jwtCookie.setSecure(true);   // Ensure it's sent over HTTPS
+        jwtCookie.setPath("/");      // Available across the entire app
+        jwtCookie.setMaxAge(24 * 60 * 60); // 1 day expiration
+
+        // Add the cookie to the HTTP response
+        httpServletResponse.addCookie(jwtCookie);
 
         return user;
     }
