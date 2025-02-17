@@ -52,7 +52,6 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<?> getProfile(@PathVariable Long userId, @RequestHeader("Authorization") String token) {
-        // Call the service to get the profile data
         try {
             User user = userService.findUserByEmailViaToken(token);
             User profile = userService.getProfile(userId, user);

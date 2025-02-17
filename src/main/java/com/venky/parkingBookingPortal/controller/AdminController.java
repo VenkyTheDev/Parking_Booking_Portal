@@ -54,7 +54,6 @@ public class AdminController {
     public ResponseEntity<?> deleteUser(@PathVariable Long userId,
                                         @RequestHeader("Authorization") String token) {
         try {
-            // Call the service layer to handle the user deletion logic
             boolean isDeleted = userService.deleteUserByAdmin(userId, token);
 
             if (isDeleted) {
@@ -133,10 +132,6 @@ public class AdminController {
         if(request.getName() != null){
             existingParking.setName(request.getName());
         }
-
-//        if(request.getImage() != null){
-//            existingParking.setParkingImage(request.getImage());
-//        }
 
         if (request.getLatitude() != null && request.getLongitude() != null) {
             Coordinate coordinate = new Coordinate(request.getLongitude(), request.getLatitude()); // Longitude first

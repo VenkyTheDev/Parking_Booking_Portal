@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -82,12 +83,15 @@ public BookingResponse bookParking(BookingRequest request) {
         return new BookingResponse(HttpStatus.BAD_REQUEST.value(),"Pre-booking is not allowed!");
     }
 
+    if (request.getEndTime().toLocalTime().isAfter(LocalTime.of(18, 30)) && user.getRole() != Role.ADMIN) {
+        return new BookingResponse(HttpStatus.BAD_REQUEST.value(),"Booking after 6:30 P.M is not allowed");
+    }
+
     // Checking Distance
     if (parking.getLocation() == null) {
         throw new ForbiddenException("Parking location is null!");
     }
 
-    // Check if the user already has an active booking (Admins can book multiple slots)
     if (user.getRole() != Role.ADMIN) {
         Optional<Booking> latestBooking = bookingDAO.findFirstByUserIdOrderByStartTimeDesc(user.getId());
 
@@ -95,7 +99,6 @@ public BookingResponse bookParking(BookingRequest request) {
             Booking lastBooking = latestBooking.get();
 
             if (lastBooking.getStatus() == Booking.Status.CANCELLED || lastBooking.getEndTime().isBefore(request.getStartTime())) {
-                // Proceed with booking
             } else {
                 return new BookingResponse(HttpStatus.BAD_REQUEST.value(),"You already have an active booking!");
             }
@@ -108,14 +111,16 @@ public BookingResponse bookParking(BookingRequest request) {
         if (userLocation.isEmpty()) {
             return new BookingResponse(HttpStatus.FORBIDDEN.value(),"Parking location is empty!");
         }
-//        if ((calculateDistance(parkingLocation, userLocation) > 100) && user.getRole() != Role.ADMIN) {
+//        if ((calculateDistance(parkingLocation, userLocation) > 100)    ) {
 //            return new BookingResponse(HttpStatus.FORBIDDEN.value(),"Please come closer to the parking location");
 //        }
+        if ((calculateDistance(parkingLocation, userLocation) > 100) && user.getRole() != Role.ADMIN) {
+            return new BookingResponse(HttpStatus.FORBIDDEN.value(),"Please come closer to the parking location");
+        }
     } catch (Exception e) {
         return new BookingResponse(HttpStatus.BAD_REQUEST.value(),"Error calculating distance");
     }
 
-    // Check if there are available slots
     int availableSlots = parkingService.fetchingAvailableSlots(request.getParkingId(), request.getStartTime(), request.getEndTime());
     if (availableSlots <= 0) {
         return new BookingResponse(HttpStatus.BAD_REQUEST.value(),"No available slots!");
@@ -123,7 +128,6 @@ public BookingResponse bookParking(BookingRequest request) {
 
 
 
-    // Proceed with the booking
     Booking booking = new Booking();
     booking.setUser(user);
     booking.setParking(parking);
@@ -131,32 +135,25 @@ public BookingResponse bookParking(BookingRequest request) {
     booking.setEndTime(request.getEndTime());
     booking.setStatus(Booking.Status.SUCCESS); // Assuming confirmed status for the new booking
 
-    // Save the booking
     bookingDAO.save(booking);
 
-    // Return the successful response with booking details
     return new BookingResponse(booking);
 }
 
     public List<BookingResponse> getBookingHistory(Long userId, User currentUser) {
-        // Fetch the user from the database using email (from token)
-
-        // Allow access if the user is an admin OR if the user is requesting their own history
         if (currentUser.getRole() != Role.ADMIN && !currentUser.getId().equals(userId)) {
             throw new ForbiddenException("You are not authorized to access this user's booking history!");
         }
 
-        // Fetch bookings based on role
         List<Booking> bookings;
         if (currentUser.getRole() == Role.ADMIN) {
             if (currentUser.getId().equals(userId)) {
                 bookings = bookingDAO.findAll();
             } else {
                 bookings = bookingDAO.findByUserId(userId);
-                // Admins get all booking history
             }
         } else {
-            bookings = bookingDAO.findByUserId(userId); // Normal users get their own history
+            bookings = bookingDAO.findByUserId(userId);
         }
 
         return bookings.stream()
@@ -166,8 +163,6 @@ public BookingResponse bookParking(BookingRequest request) {
 
 
     public String cancelBooking(Long userId, User requestingUser , Long bookingId) {
-        // Retrieve the latest active booking for the given user ID
-        //Optional<Booking> bookingOptional = bookingDAO.findFirstByUserIdAndStatusOrderByStartTimeDesc(userId, Booking.Status.SUCCESS);
 
         Optional<Booking> cancelTheBooking = bookingDAO.findById(bookingId);
 
@@ -177,13 +172,6 @@ public BookingResponse bookParking(BookingRequest request) {
             booking = cancelTheBooking.get();
         }
 
-//        if (bookingOptional.isEmpty()) {
-//            return "No active booking found for this user!";
-//        }
-
-//        Booking booking = bookingOptional.get();
-
-        // Check if the requesting user is an admin or the owner of the booking
         if (requestingUser.getRole() != Role.ADMIN && !requestingUser.getId().equals(userId)) {
             return "You do not have permission to cancel this booking!";
         }
@@ -193,16 +181,13 @@ public BookingResponse bookParking(BookingRequest request) {
         if (now.isBefore(booking.getStartTime()) ||
                 (now.isAfter(booking.getStartTime()) && now.isBefore(booking.getEndTime()))) {
 
-            // Check if the booking is already cancelled
             if (booking.getStatus() == Booking.Status.CANCELLED) {
                 return "Booking is already cancelled!";
             }
 
-            // Update the status to CANCELLED
             booking.setStatus(Booking.Status.CANCELLED);
             bookingDAO.save(booking);
 
-            // Increment the available slots in the parking lot
             Parking parking = booking.getParking();
             parking.incrementSlots();
             parkingDAO.save(parking);
@@ -235,27 +220,21 @@ public BookingResponse bookParking(BookingRequest request) {
         }
         User user = userOptional.get();
 
-        // Retrieve booking by ID
         Optional<Booking> bookingOptional = bookingDAO.findById(bookingId);
         if (bookingOptional.isEmpty()) {
             return "Booking not found!";
         }
         Booking booking = bookingOptional.get();
 
-        // Check if the requesting user is an admin or the owner of the booking
         if (requestingUser.getRole() != Role.ADMIN && !requestingUser.getId().equals(userId)) {
             return "You do not have permission to reschedule this booking!";
         }
-
-        // Check if the booking belongs to the given user ID
         if (!booking.getUser().getId().equals(userId)) {
             return "Booking does not belong to the provided user ID!";
         }
 
-        // Retrieve parking details
         Parking parking = booking.getParking();
 
-        // Update booking time
         if (newStartTime != null) {
             booking.setStartTime(newStartTime);
         }
@@ -282,14 +261,11 @@ public BookingResponse bookParking(BookingRequest request) {
         if (point1 == null || point2 == null) {
             throw new IllegalArgumentException("Both points must be non-null");
         }
-
-        // Extract the latitude and longitude of the points
         double lat1 = point1.getY();
         double lon1 = point1.getX();
         double lat2 = point2.getY();
         double lon2 = point2.getX();
 
-        // Convert degrees to radians
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
 
