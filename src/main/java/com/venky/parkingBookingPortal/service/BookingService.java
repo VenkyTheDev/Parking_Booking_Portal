@@ -111,12 +111,13 @@ public BookingResponse bookParking(BookingRequest request) {
         if (userLocation.isEmpty()) {
             return new BookingResponse(HttpStatus.FORBIDDEN.value(),"Parking location is empty!");
         }
+        double distance = calculateDistance(parkingLocation, userLocation);
         //Below block is for the testing
 //        if ((calculateDistance(parkingLocation, userLocation) > 100)    ) {
 //            return new BookingResponse(HttpStatus.FORBIDDEN.value(),"Please come closer to the parking location");
 //        }
-        if ((calculateDistance(parkingLocation, userLocation) > 100) && user.getRole() != Role.ADMIN) {
-            return new BookingResponse(HttpStatus.FORBIDDEN.value(),"Please come closer to the parking location");
+        if (( distance > 100) && user.getRole() != Role.ADMIN) {
+            return new BookingResponse(HttpStatus.FORBIDDEN.value(), "Please come closer to the parking location. You are " + (int)distance + " meters away!");
         }
     } catch (Exception e) {
         return new BookingResponse(HttpStatus.BAD_REQUEST.value(),"Error calculating distance");

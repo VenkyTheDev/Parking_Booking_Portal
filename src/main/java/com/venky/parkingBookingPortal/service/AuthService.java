@@ -7,6 +7,7 @@ import com.venky.parkingBookingPortal.entity.Organisation;
 import com.venky.parkingBookingPortal.entity.User;
 import com.venky.parkingBookingPortal.dao.UserDAO;
 import com.venky.parkingBookingPortal.dao.OrganisationDAO;
+import com.venky.parkingBookingPortal.exceptions.ForbiddenException;
 import com.venky.parkingBookingPortal.utils.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,7 +39,7 @@ public class AuthService {
         // Check if the email already exists
         Optional<User> existingUser = userDAO.findByEmail(signupRequest.getEmail());
         if (existingUser.isPresent()) {
-            throw new RuntimeException("Email is already taken");
+            throw new ForbiddenException("Email already in use");
         }
 
         User user = new User();
