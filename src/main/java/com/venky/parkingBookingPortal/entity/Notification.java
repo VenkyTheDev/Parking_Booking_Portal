@@ -17,16 +17,19 @@ public class Notification {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)  // Foreign Key to User
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "booking_id", nullable = false)  // Foreign Key to Booking
+    @JoinColumn(name = "booking_id", nullable = false)
     private Booking booking;
 
-    @Column(nullable = false, name = "message")
-    private String message;  // Message content for the notification
+    @Column(nullable = false , name = "message")
+    private String message;
 
-    @Column(nullable = false, name = "created_at")
-    private LocalDateTime createdAt;  // Timestamp of notification creation
+    @Column(nullable = false , name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private boolean isDeleted = false;
 }

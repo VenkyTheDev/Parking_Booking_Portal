@@ -3,6 +3,8 @@ package com.venky.parkingBookingPortal.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,26 +18,36 @@ public class Booking {
     @Column(unique = true, nullable = false, name = "id")
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)  // Foreign Key to User
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "parking_id", nullable = false)  // Foreign Key to Parking
+    @JoinColumn(nullable = false)
     private Parking parking;
 
-    @Column(nullable = false, name = "start_time")
-    private LocalDateTime startTime;  // Start time of the booking
+    @Column(nullable = false)
+    private LocalDateTime startTime;
 
-    @Column(nullable = false, name = "end_time")
-    private LocalDateTime endTime;  // End time of the booking
+    @Column(nullable = false)
+    private LocalDateTime endTime;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, name = "status")
-    private Status status;  // Status of the booking (Success / Failed)
+    @Column(nullable = false, length = 20)
+    private Status status;
 
-    // Enum for booking status
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private boolean processed = false;
+
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
     public enum Status {
-        SUCCESS, FAILED
+        SUCCESS, CANCELLED, FAILED
     }
 }
+
